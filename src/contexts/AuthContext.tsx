@@ -1,131 +1,118 @@
 /* eslint-disable react-refresh/only-export-components -- Provider + useAuth pattern */
+import type { Session, User } from '@supabase/supabase-js'
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
-import type { User } from '@supabase/supabase-js'
-import { migrateLocalChatsToSupabase } from '../lib/api/serverChat'
-import { tryGetSupabaseBrowserClient } from '../lib/supabase/client'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AuthModal } from '../components/auth/AuthModal'
+import { tryGetSupabaseBrowserClient } from '../lib/supabase/client'
 
 type AuthContextValue = {
+  session: Session | null
   user: User | null
-  sessionReady: boolean
-  authModalOpen: boolean
-  openAuthModal: () => void
+  /** False until initial getSession (or “no client”) finishes */
+  authReady: boolean
+  openAuthModal: (options?: { returnTo?: string }) => void
   closeAuthModal: () => void
-  signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
-  signUpWithPassword: (
-    email: string,
-    password: string,
-  ) => Promise<{ error: string | null; needsEmailConfirm: boolean }>
-  signOut: () => Promise<void>
+  authModalOpen: boolean
 }
 
-const AuthCtx = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function useAuth(): AuthContextValue {
-  const v = useContext(AuthCtx)
-  if (!v) throw new Error('useAuth must be used within AuthProvider')
-  return v
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  return ctx
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [sessionReady, setSessionReady] = useState(false)
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  const [session, setSession] = useState<Session | null>(null)
+  const [authReady, setAuthReady] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [returnTo, setReturnTo] = useState<string | null>(null)
 
   useEffect(() => {
-    const client = tryGetSupabaseBrowserClient()
-    if (!client) {
-      queueMicrotask(() => {
-        setUser(null)
-        setSessionReady(true)
-      })
+    const supabase = tryGetSupabaseBrowserClient()
+    if (!supabase) {
+      setSession(null)
+      setAuthReady(true)
       return
     }
 
-    client.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null
-      queueMicrotask(() => {
-        setUser(u)
-        setSessionReady(true)
-      })
-      if (u) void migrateLocalChatsToSupabase(client, u.id)
+    let cancelled = false
+
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (!cancelled) {
+        setSession(s)
+        setAuthReady(true)
+      }
     })
 
     const {
       data: { subscription },
-    } = client.auth.onAuthStateChange((event, session) => {
-      const u = session?.user ?? null
-      queueMicrotask(() => setUser(u))
-      if (event === 'SIGNED_IN' && u) {
-        void migrateLocalChatsToSupabase(client, u.id).then(() => {
-          window.dispatchEvent(new Event('velvet-server-chats-migrated'))
-        })
-      }
-      if (event === 'SIGNED_OUT') queueMicrotask(() => setAuthModalOpen(false))
+    } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
   }, [])
 
-  const openAuthModal = useCallback(() => setAuthModalOpen(true), [])
-  const closeAuthModal = useCallback(() => setAuthModalOpen(false), [])
+  useLayoutEffect(() => {
+    if (!session) return
+    setAuthModalOpen(false)
+    if (returnTo) {
+      navigate(returnTo, { replace: true })
+      setReturnTo(null)
+    }
+  }, [session, returnTo, navigate])
 
-  const signInWithPassword = useCallback(async (email: string, password: string) => {
-    const client = tryGetSupabaseBrowserClient()
-    if (!client) return { error: 'Chat server is not configured.' }
-    const { error } = await client.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
+  const openAuthModal = useCallback((options?: { returnTo?: string }) => {
+    if (options?.returnTo) setReturnTo(options.returnTo)
+    setAuthModalOpen(true)
   }, [])
 
-  const signUpWithPassword = useCallback(async (email: string, password: string) => {
-    const client = tryGetSupabaseBrowserClient()
-    if (!client) return { error: 'Chat server is not configured.', needsEmailConfirm: false }
-    const { data, error } = await client.auth.signUp({ email, password })
-    if (error) return { error: error.message, needsEmailConfirm: false }
-    const needsEmailConfirm = !data.session
-    return { error: null, needsEmailConfirm }
-  }, [])
+  const sessionRef = useRef(session)
+  sessionRef.current = session
 
-  const signOut = useCallback(async () => {
-    const client = tryGetSupabaseBrowserClient()
-    if (client) await client.auth.signOut()
-  }, [])
+  const closeAuthModal = useCallback(() => {
+    setAuthModalOpen(false)
+    setReturnTo(null)
+    const onChat = pathname.startsWith('/chat/')
+    if (onChat && !sessionRef.current) {
+      navigate('/', { replace: true })
+    }
+  }, [navigate, pathname])
 
   const value = useMemo(
     () => ({
-      user,
-      sessionReady,
-      authModalOpen,
+      session,
+      user: session?.user ?? null,
+      authReady,
       openAuthModal,
       closeAuthModal,
-      signInWithPassword,
-      signUpWithPassword,
-      signOut,
+      authModalOpen,
     }),
-    [
-      user,
-      sessionReady,
-      authModalOpen,
-      openAuthModal,
-      closeAuthModal,
-      signInWithPassword,
-      signUpWithPassword,
-      signOut,
-    ],
+    [session, authReady, openAuthModal, closeAuthModal, authModalOpen],
   )
 
   return (
-    <AuthCtx.Provider value={value}>
+    <AuthContext.Provider value={value}>
       {children}
-      <AuthModal />
-    </AuthCtx.Provider>
+      <AuthModal open={authModalOpen} onClose={closeAuthModal} />
+    </AuthContext.Provider>
   )
 }

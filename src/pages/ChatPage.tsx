@@ -1,22 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ANONYMOUS_FREE_MESSAGES } from '../constants/anonymousTrial'
-import { CREDITS_PER_MESSAGE } from '../constants/credits'
-import { useAuth } from '../contexts/AuthContext'
 import { useCredits } from '../contexts/CreditsContext'
+import { CREDITS_PER_MESSAGE } from '../constants/credits'
 import { getProfileById } from '../data/mockProfiles'
-import {
-  ensureChatThread,
-  fetchThreadMessages,
-  replaceThreadMessages,
-} from '../lib/api/serverChat'
-import { tryGetSupabaseBrowserClient } from '../lib/supabase/client'
-import type { ChatMessage } from '../types/chat'
-import {
-  canSendAnonymousMessage,
-  recordAnonymousOutboundMessage,
-  remainingAnonymousMessages,
-} from '../utils/anonymousTrial'
 import { clearUnread, incrementUnread } from '../utils/chatUnread'
 import {
   loadThreadMessages,
@@ -25,6 +11,7 @@ import {
   threadStorageKey,
 } from '../utils/chatThreadStorage'
 import { recordChatOpened } from '../utils/recentChats'
+import type { ChatMessage } from '../types/chat'
 
 const MOCK_REPLIES = [
   'Mmm, tell me more… I like where this is going.',
@@ -51,29 +38,17 @@ function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-function openerMessages(profile: { name: string }): ChatMessage[] {
-  const text = `Hey… it’s ${firstName(profile.name)}. I’ve been hoping you’d message. What’s on your mind?`
-  return [
-    {
-      id: newId(),
-      role: 'them' as const,
-      text,
-      createdAt: Date.now(),
-    },
-  ]
-}
-
 type ChatPageProps = {
   profileId: string
 }
 
 export function ChatPage({ profileId }: ChatPageProps) {
   const navigate = useNavigate()
-  const { user, sessionReady, openAuthModal } = useAuth()
   const { balance, trySpendCredits, openBuyCredits } = useCredits()
   const listRef = useRef<HTMLDivElement>(null)
   const replyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const viewOpenRef = useRef(true)
+  /** Bumped on mount/unmount so late reply timers do not touch a new session or call setState after unmount. */
   const generationRef = useRef(0)
 
   const profile = useMemo(
@@ -81,19 +56,9 @@ export function ChatPage({ profileId }: ChatPageProps) {
     [profileId],
   )
 
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [messagesReady, setMessagesReady] = useState(false)
-  const [serverThreadId, setServerThreadId] = useState<string | null>(null)
-  const [draft, setDraft] = useState('')
-  const [themTyping, setThemTyping] = useState(false)
-
   useEffect(() => {
-    if (!(profileId && profile)) return
-    recordChatOpened(profileId)
-    if (!user) return
-    const client = tryGetSupabaseBrowserClient()
-    if (client) void ensureChatThread(client, user.id, profileId)
-  }, [profileId, profile, user])
+    if (profileId && profile) recordChatOpened(profileId)
+  }, [profileId, profile])
 
   useEffect(() => {
     generationRef.current += 1
@@ -105,77 +70,36 @@ export function ChatPage({ profileId }: ChatPageProps) {
     }
   }, [profileId])
 
-  useEffect(() => {
-    if (!profileId || !profile || !sessionReady) return
-    const p = profile
-    let cancelled = false
-
-    async function run() {
-      setMessagesReady(false)
-      const client = tryGetSupabaseBrowserClient()
-      if (!user || !client) {
-        const saved = loadThreadMessages(profileId)
-        if (cancelled) return
-        setServerThreadId(null)
-        setMessages(saved && saved.length > 0 ? saved : openerMessages(p))
-        setMessagesReady(true)
-        return
-      }
-
-      const threadId = await ensureChatThread(client, user.id, profileId)
-      if (cancelled) return
-      if (!threadId) {
-        const saved = loadThreadMessages(profileId)
-        setServerThreadId(null)
-        setMessages(saved && saved.length > 0 ? saved : openerMessages(p))
-        setMessagesReady(true)
-        return
-      }
-      setServerThreadId(threadId)
-      let remote = await fetchThreadMessages(client, threadId)
-      if (cancelled) return
-      if (remote.length === 0) {
-        const localSaved = loadThreadMessages(profileId)
-        if (localSaved && localSaved.length > 0) {
-          await replaceThreadMessages(client, threadId, localSaved)
-          remote = localSaved
-        } else {
-          const seed = openerMessages(p)
-          await replaceThreadMessages(client, threadId, seed)
-          remote = seed
-        }
-      }
-      setMessages(remote)
-      setMessagesReady(true)
-    }
-
-    void run()
-    return () => {
-      cancelled = true
-    }
-  }, [profileId, profile, user, sessionReady])
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (!profileId) return []
+    const p = getProfileById(profileId)
+    if (!p) return []
+    const saved = loadThreadMessages(profileId)
+    if (saved) return saved
+    const opener = `Hey… it’s ${firstName(p.name)}. I’ve been hoping you’d message. What’s on your mind?`
+    return [
+      {
+        id: newId(),
+        role: 'them' as const,
+        text: opener,
+        createdAt: Date.now(),
+      },
+    ]
+  })
+  const [draft, setDraft] = useState('')
+  const [themTyping, setThemTyping] = useState(false)
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, themTyping])
 
   useEffect(() => {
-    if (!profileId || !profile || !messagesReady) return
-    if (!user) {
-      saveThreadMessages(profileId, messages)
-      return
-    }
-    if (!serverThreadId) return
-    const client = tryGetSupabaseBrowserClient()
-    if (!client) return
-    const t = window.setTimeout(() => {
-      void replaceThreadMessages(client, serverThreadId, messages)
-    }, 450)
-    return () => window.clearTimeout(t)
-  }, [profileId, profile, messages, user, serverThreadId, messagesReady])
+    if (!profileId || !profile) return
+    saveThreadMessages(profileId, messages)
+  }, [profileId, profile, messages])
 
   useEffect(() => {
-    if (!profileId || user) return
+    if (!profileId) return
     const k = threadStorageKey(profileId)
     const onStorage = (e: StorageEvent) => {
       if (e.key !== k || e.newValue == null) return
@@ -184,23 +108,16 @@ export function ChatPage({ profileId }: ChatPageProps) {
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
-  }, [profileId, user])
+  }, [profileId])
 
   const send = useCallback(() => {
     const text = draft.trim()
-    if (!text || !profile || themTyping || !sessionReady) return
-
-    if (!user && !canSendAnonymousMessage()) {
-      openAuthModal()
-      return
-    }
+    if (!text || !profile || themTyping) return
 
     if (!trySpendCredits(CREDITS_PER_MESSAGE)) {
       openBuyCredits()
       return
     }
-
-    if (!user) recordAnonymousOutboundMessage()
 
     const userMsg: ChatMessage = {
       id: newId(),
@@ -212,6 +129,7 @@ export function ChatPage({ profileId }: ChatPageProps) {
     setMessages((m) => [...m, userMsg])
     setThemTyping(true)
 
+    // Later: stream from chat API / WebSocket instead of a timed mock reply.
     if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current)
     const delay = 700 + Math.random() * 1200
     const scheduledGen = generationRef.current
@@ -236,17 +154,7 @@ export function ChatPage({ profileId }: ChatPageProps) {
         incrementUnread(profileId)
       }
     }, delay)
-  }, [
-    draft,
-    profile,
-    profileId,
-    themTyping,
-    trySpendCredits,
-    openBuyCredits,
-    sessionReady,
-    user,
-    openAuthModal,
-  ])
+  }, [draft, profile, profileId, themTyping, trySpendCredits, openBuyCredits])
 
   if (!profile) {
     return (
@@ -264,13 +172,6 @@ export function ChatPage({ profileId }: ChatPageProps) {
   }
 
   const fn = firstName(profile.name)
-  const authGate = sessionReady && !user && !canSendAnonymousMessage()
-  const sendDisabled =
-    !draft.trim() ||
-    themTyping ||
-    balance < CREDITS_PER_MESSAGE ||
-    !sessionReady ||
-    authGate
 
   return (
     <div className="flex h-[100dvh] min-h-0 flex-col bg-slate-100">
@@ -312,69 +213,41 @@ export function ChatPage({ profileId }: ChatPageProps) {
         aria-live="polite"
         aria-relevant="additions"
       >
-        {!messagesReady ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 py-16 text-sm text-slate-500">
-            <span className="size-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
-            Loading conversation…
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm sm:max-w-[70%] ${
+                m.role === 'user'
+                  ? 'rounded-br-md bg-slate-900 text-white shadow-slate-900/15'
+                  : 'rounded-bl-md border border-slate-200 bg-white text-slate-900 shadow-slate-900/5'
+              }`}
+            >
+              {m.role === 'them' && (
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  {fn}
+                </p>
+              )}
+              <p className="whitespace-pre-wrap">{m.text}</p>
+            </div>
           </div>
-        ) : (
-          <>
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm sm:max-w-[70%] ${
-                    m.role === 'user'
-                      ? 'rounded-br-md bg-slate-900 text-white shadow-slate-900/15'
-                      : 'rounded-bl-md border border-slate-200 bg-white text-slate-900 shadow-slate-900/5'
-                  }`}
-                >
-                  {m.role === 'them' && (
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                      {fn}
-                    </p>
-                  )}
-                  <p className="whitespace-pre-wrap">{m.text}</p>
-                </div>
-              </div>
-            ))}
-            {themTyping && (
-              <div className="flex justify-start">
-                <div className="rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-400 shadow-sm">
-                  <span className="inline-flex gap-1">
-                    <span className="size-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.2s]" />
-                    <span className="size-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.1s]" />
-                    <span className="size-1.5 animate-bounce rounded-full bg-slate-400" />
-                  </span>
-                </div>
-              </div>
-            )}
-          </>
+        ))}
+        {themTyping && (
+          <div className="flex justify-start">
+            <div className="rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-400 shadow-sm">
+              <span className="inline-flex gap-1">
+                <span className="size-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.2s]" />
+                <span className="size-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.1s]" />
+                <span className="size-1.5 animate-bounce rounded-full bg-slate-400" />
+              </span>
+            </div>
+          </div>
         )}
       </div>
 
       <div className="shrink-0 border-t border-slate-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
-        {sessionReady && !user && canSendAnonymousMessage() && (
-          <p className="mx-auto mb-2 max-w-3xl rounded-xl border border-sky-200/80 bg-sky-50/90 px-3 py-2 text-center text-xs font-medium text-sky-950/90 sm:text-sm">
-            {remainingAnonymousMessages()} of {ANONYMOUS_FREE_MESSAGES} trial sends left — then create a free account
-            for cloud backup.
-          </p>
-        )}
-        {authGate && (
-          <p className="mx-auto mb-2 max-w-3xl rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-center text-xs font-medium text-amber-950/90 sm:text-sm">
-            You’ve used your {ANONYMOUS_FREE_MESSAGES} trial messages.{' '}
-            <button
-              type="button"
-              className="font-semibold text-slate-900 underline decoration-slate-400 hover:decoration-slate-600"
-              onClick={openAuthModal}
-            >
-              Sign up
-            </button>{' '}
-            to keep chatting — your threads will sync to your account.
-          </p>
-        )}
         {balance < CREDITS_PER_MESSAGE && (
           <p className="mx-auto mb-2 max-w-3xl rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-center text-xs font-medium text-amber-950/90 sm:text-sm">
             You’re out of credits.{' '}
@@ -402,17 +275,14 @@ export function ChatPage({ profileId }: ChatPageProps) {
             id="chat-input"
             type="text"
             autoComplete="off"
-            placeholder={
-              authGate ? 'Sign up to send messages…' : `Message ${fn}…`
-            }
+            placeholder={`Message ${fn}…`}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            disabled={authGate}
-            className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none ring-slate-400/0 transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-300/40 disabled:opacity-50"
+            className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none ring-slate-400/0 transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-300/40"
           />
           <button
             type="submit"
-            disabled={sendDisabled}
+            disabled={!draft.trim() || themTyping || balance < CREDITS_PER_MESSAGE}
             className="shrink-0 rounded-2xl bg-slate-900 px-5 py-3 font-display text-sm font-semibold text-white shadow-sm transition enabled:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send

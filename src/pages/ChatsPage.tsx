@@ -1,17 +1,15 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import { DiscreetNoticeBar } from '../components/DiscreetNoticeBar'
 import { getProfileById } from '../data/mockProfiles'
-import { listChatThreads, type ServerChatThreadRow } from '../lib/api/serverChat'
-import { tryGetSupabaseBrowserClient } from '../lib/supabase/client'
 import {
   getRecentChatsSnapshot,
   parseRecentChatsJson,
   subscribeRecentChats,
 } from '../utils/recentChats'
 
-function formatOpened(d: Date): string {
+function formatOpened(ts: number): string {
+  const d = new Date(ts)
   const now = new Date()
   const sameDay =
     d.getDate() === now.getDate() &&
@@ -29,7 +27,6 @@ function formatOpened(d: Date): string {
 }
 
 export function ChatsPage() {
-  const { user } = useAuth()
   const recentJson = useSyncExternalStore(
     subscribeRecentChats,
     getRecentChatsSnapshot,
@@ -37,46 +34,15 @@ export function ChatsPage() {
   )
   const recent = useMemo(() => parseRecentChatsJson(recentJson), [recentJson])
 
-  const [serverThreads, setServerThreads] = useState<ServerChatThreadRow[]>([])
-
-  const refreshServerThreads = useCallback(() => {
-    const client = tryGetSupabaseBrowserClient()
-    if (!user || !client) {
-      setServerThreads([])
-      return
-    }
-    void listChatThreads(client).then(setServerThreads)
-  }, [user])
-
-  useEffect(() => {
-    queueMicrotask(() => refreshServerThreads())
-  }, [refreshServerThreads])
-
-  useEffect(() => {
-    const onMigrated = () => refreshServerThreads()
-    window.addEventListener('velvet-server-chats-migrated', onMigrated)
-    return () => window.removeEventListener('velvet-server-chats-migrated', onMigrated)
-  }, [refreshServerThreads])
-
   const rows = useMemo(() => {
-    if (user) {
-      return serverThreads
-        .map((t) => {
-          const p = getProfileById(t.companion_profile_id)
-          if (!p) return null
-          const openedAt = new Date(t.updated_at).getTime()
-          return { profile: p, openedAt, key: p.id }
-        })
-        .filter((x): x is NonNullable<typeof x> => x !== null)
-    }
     return recent
       .map((e) => {
         const p = getProfileById(e.profileId)
         if (!p) return null
-        return { profile: p, openedAt: e.openedAt, key: p.id }
+        return { entry: e, profile: p }
       })
       .filter((x): x is NonNullable<typeof x> => x !== null)
-  }, [user, recent, serverThreads])
+  }, [recent])
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -98,7 +64,7 @@ export function ChatsPage() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {rows.map(({ profile, openedAt }) => (
+            {rows.map(({ entry, profile }) => (
               <li key={profile.id}>
                 <Link
                   to={`/chat/${profile.id}`}
@@ -113,7 +79,7 @@ export function ChatsPage() {
                     <p className="truncate font-display font-bold text-slate-900">{profile.name}</p>
                     <p className="truncate text-sm text-slate-600">{profile.moodLabel}</p>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {formatOpened(new Date(openedAt))} · <span className="text-sky-700">Open</span>
+                      {formatOpened(entry.openedAt)} · <span className="text-sky-700">Open</span>
                     </p>
                   </div>
                 </Link>

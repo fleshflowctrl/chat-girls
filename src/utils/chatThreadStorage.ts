@@ -6,26 +6,6 @@ export function threadStorageKey(profileId: string): string {
   return PREFIX + encodeURIComponent(profileId.trim())
 }
 
-/** Profile ids that have a non-empty saved thread in this browser (for migration). */
-export function listLocalThreadProfileIds(): string[] {
-  const out: string[] = []
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i)
-      if (!k?.startsWith(PREFIX)) continue
-      const encoded = k.slice(PREFIX.length)
-      try {
-        out.push(decodeURIComponent(encoded))
-      } catch {
-        /* ignore bad keys */
-      }
-    }
-  } catch {
-    /* access denied */
-  }
-  return out
-}
-
 function isMessage(x: unknown): x is ChatMessage {
   if (typeof x !== 'object' || x === null) return false
   const o = x as Record<string, unknown>

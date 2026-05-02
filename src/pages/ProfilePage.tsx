@@ -7,7 +7,6 @@ import {
   PROFILE_REGIONS,
   PROFILE_TAGLINES,
 } from '../data/profilePickLists'
-import { useAuth } from '../contexts/AuthContext'
 import {
   EMPTY_USER_PROFILE,
   profileCompletionPercent,
@@ -72,7 +71,6 @@ const inputClass =
   'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25'
 
 export function ProfilePage() {
-  const { user, openAuthModal, signOut } = useAuth()
   const [profile, setProfile] = useState<UserProfileDraft>(() => readUserProfile())
 
   useEffect(() => {
@@ -133,43 +131,6 @@ export function ProfilePage() {
             The more you fill in, the easier it is for people to trust you and reply. Members with a
             complete profile often see a <span className="font-semibold text-slate-900">higher response rate</span>.
           </p>
-        </section>
-
-        <section
-          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5"
-          aria-labelledby="account-heading"
-        >
-          <h3 id="account-heading" className="font-display text-sm font-bold text-slate-900">
-            Account
-          </h3>
-          {user ? (
-            <div className="mt-3 space-y-3">
-              <p className="text-xs text-slate-600">
-                Signed in as{' '}
-                <span className="font-medium text-slate-900">{user.email ?? user.id}</span>
-              </p>
-              <button
-                type="button"
-                onClick={() => void signOut()}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
-              >
-                Sign out
-              </button>
-            </div>
-          ) : (
-            <div className="mt-3 space-y-2">
-              <p className="text-xs text-slate-600">
-                Create a free account after your trial messages so chats sync to the cloud.
-              </p>
-              <button
-                type="button"
-                onClick={openAuthModal}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-              >
-                Sign up or log in
-              </button>
-            </div>
-          )}
         </section>
 
         <section className="flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">

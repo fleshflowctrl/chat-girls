@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   getActiveProfiles,
   getCatalogVersion,
@@ -17,6 +18,7 @@ import { ProfileGrid } from './ProfileGrid'
 
 export function LandingPage() {
   const navigate = useNavigate()
+  const { session, openAuthModal } = useAuth()
   const [showFunnel, setShowFunnel] = useState(() => !readFunnelSkippedThisSession())
   const catalogRevision = useSyncExternalStore(
     subscribeCompanionCatalog,
@@ -26,9 +28,13 @@ export function LandingPage() {
 
   const handleChatNow = useCallback(
     (profile: MockProfile) => {
-      navigate(`/chat/${profile.id}`)
+      if (session) {
+        navigate(`/chat/${profile.id}`)
+        return
+      }
+      openAuthModal({ returnTo: `/chat/${profile.id}` })
     },
-    [navigate],
+    [navigate, openAuthModal, session],
   )
 
   const completeFunnel = useCallback(() => {
