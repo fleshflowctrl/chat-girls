@@ -1,5 +1,11 @@
+import { useMemo, useSyncExternalStore } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useCredits } from '../../contexts/CreditsContext'
+import {
+  getTotalUnreadFromSnapshot,
+  getUnreadSnapshot,
+  subscribeUnreadChats,
+} from '../../utils/chatUnread'
 
 const navBase =
   'flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition sm:text-xs'
@@ -60,6 +66,8 @@ function IconProfile({ className }: { className?: string }) {
 
 export function BottomNav() {
   const { balance } = useCredits()
+  const unreadJson = useSyncExternalStore(subscribeUnreadChats, getUnreadSnapshot, () => '{}')
+  const unreadTotal = useMemo(() => getTotalUnreadFromSnapshot(unreadJson), [unreadJson])
 
   return (
     <nav
@@ -77,9 +85,17 @@ export function BottomNav() {
         </NavLink>
         <NavLink
           to="/chats"
+          aria-label={unreadTotal > 0 ? `Chats, ${unreadTotal} unread` : 'Chats'}
           className={({ isActive }) => `${navBase} ${isActive ? navActive : navIdle}`}
         >
-          <IconChats className="size-6 shrink-0 sm:size-6" />
+          <span className="relative inline-flex">
+            <IconChats className="size-6 shrink-0 sm:size-6" />
+            {unreadTotal > 0 ? (
+              <span className="absolute -right-1 -top-0.5 min-w-[1rem] rounded-full bg-slate-900 px-0.5 text-center font-display text-[9px] font-bold leading-4 text-white ring-2 ring-white">
+                {unreadTotal > 99 ? '99+' : unreadTotal}
+              </span>
+            ) : null}
+          </span>
           Chats
         </NavLink>
         <NavLink

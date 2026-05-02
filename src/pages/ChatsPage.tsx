@@ -1,5 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
+import { DiscreetNoticeBar } from '../components/DiscreetNoticeBar'
 import { getProfileById } from '../data/mockProfiles'
 import {
   getRecentChatsSnapshot,
@@ -45,12 +46,7 @@ export function ChatsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
-        <h1 className="font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-          Chats
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">Conversations you have opened recently.</p>
-      </header>
+      <DiscreetNoticeBar />
 
       <div className="mx-auto max-w-lg px-3 py-4 sm:px-4">
         {rows.length === 0 ? (

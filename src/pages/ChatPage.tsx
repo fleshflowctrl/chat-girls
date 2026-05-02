@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCredits } from '../contexts/CreditsContext'
 import { CREDITS_PER_MESSAGE } from '../constants/credits'
 import { getProfileById } from '../data/mockProfiles'
+import { clearUnread, incrementUnread } from '../utils/chatUnread'
 import { recordChatOpened } from '../utils/recentChats'
 import type { ChatMessage } from '../types/chat'
 
@@ -40,6 +41,9 @@ export function ChatPage({ profileId }: ChatPageProps) {
   const { balance, trySpendCredits, openBuyCredits } = useCredits()
   const listRef = useRef<HTMLDivElement>(null)
   const replyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const viewOpenRef = useRef(true)
+  /** Bumped on mount/unmount so late reply timers do not touch a new session or call setState after unmount. */
+  const generationRef = useRef(0)
 
   const profile = useMemo(
     () => (profileId ? getProfileById(profileId) : undefined),
@@ -49,6 +53,16 @@ export function ChatPage({ profileId }: ChatPageProps) {
   useEffect(() => {
     if (profileId && profile) recordChatOpened(profileId)
   }, [profileId, profile])
+
+  useEffect(() => {
+    generationRef.current += 1
+    viewOpenRef.current = true
+    clearUnread(profileId)
+    return () => {
+      viewOpenRef.current = false
+      generationRef.current += 1
+    }
+  }, [profileId])
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     if (!profileId) return []
@@ -66,12 +80,6 @@ export function ChatPage({ profileId }: ChatPageProps) {
   })
   const [draft, setDraft] = useState('')
   const [themTyping, setThemTyping] = useState(false)
-
-  useEffect(() => {
-    return () => {
-      if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current)
-    }
-  }, [])
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
@@ -99,20 +107,29 @@ export function ChatPage({ profileId }: ChatPageProps) {
     // Later: stream from chat API / WebSocket instead of a timed mock reply.
     if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current)
     const delay = 700 + Math.random() * 1200
+    const scheduledGen = generationRef.current
     replyTimerRef.current = window.setTimeout(() => {
       replyTimerRef.current = null
-      setMessages((m) => [
-        ...m,
-        {
-          id: newId(),
-          role: 'them',
-          text: randomReply(),
-          createdAt: Date.now(),
-        },
-      ])
-      setThemTyping(false)
+      if (scheduledGen !== generationRef.current) {
+        incrementUnread(profileId)
+        return
+      }
+      if (viewOpenRef.current) {
+        setMessages((m) => [
+          ...m,
+          {
+            id: newId(),
+            role: 'them',
+            text: randomReply(),
+            createdAt: Date.now(),
+          },
+        ])
+        setThemTyping(false)
+      } else {
+        incrementUnread(profileId)
+      }
     }, delay)
-  }, [draft, profile, themTyping, trySpendCredits, openBuyCredits])
+  }, [draft, profile, profileId, themTyping, trySpendCredits, openBuyCredits])
 
   if (!profile) {
     return (
