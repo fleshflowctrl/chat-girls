@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useCredits } from '../contexts/CreditsContext'
+import { CREDITS_PER_MESSAGE } from '../constants/credits'
 import { getProfileById } from '../data/mockProfiles'
 import type { ChatMessage } from '../types/chat'
 
@@ -31,6 +33,7 @@ function newId(): string {
 export function ChatPage() {
   const { profileId } = useParams<{ profileId: string }>()
   const navigate = useNavigate()
+  const { balance, trySpendCredits, openBuyCredits } = useCredits()
   const listRef = useRef<HTMLDivElement>(null)
   const replyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -70,6 +73,11 @@ export function ChatPage() {
     const text = draft.trim()
     if (!text || !profile || themTyping) return
 
+    if (!trySpendCredits(CREDITS_PER_MESSAGE)) {
+      openBuyCredits()
+      return
+    }
+
     const userMsg: ChatMessage = {
       id: newId(),
       role: 'user',
@@ -96,7 +104,7 @@ export function ChatPage() {
       ])
       setThemTyping(false)
     }, delay)
-  }, [draft, profile, themTyping])
+  }, [draft, profile, themTyping, trySpendCredits, openBuyCredits])
 
   if (!profileId) {
     return <Navigate to="/" replace />
@@ -120,12 +128,12 @@ export function ChatPage() {
   const fn = firstName(profile.name)
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-stone-100">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-stone-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-4">
+    <div className="flex min-h-[100dvh] flex-col bg-stone-950">
+      <header className="flex items-center gap-3 border-b border-stone-800 bg-stone-900 px-3 py-3 sm:px-4">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full text-stone-600 transition hover:bg-stone-100 hover:text-stone-900"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full text-stone-400 transition hover:bg-stone-800 hover:text-white"
           aria-label="Go back"
         >
           <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -135,23 +143,35 @@ export function ChatPage() {
         <img
           src={profile.imageUrl}
           alt=""
-          className="size-11 shrink-0 rounded-full object-cover ring-2 ring-rose-100"
+          className="size-11 shrink-0 rounded-full object-cover ring-2 ring-rose-500/40"
         />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate font-display text-base font-bold text-stone-900">{profile.name}</h1>
-          <p className="truncate text-xs text-violet-600">{profile.moodLabel}</p>
+          <h1 className="truncate font-display text-base font-bold text-white">{profile.name}</h1>
+          <p className="truncate text-xs text-rose-300/90">{profile.moodLabel}</p>
         </div>
-        <Link
-          to="/"
-          className="hidden shrink-0 rounded-full border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-600 transition hover:bg-stone-50 sm:inline"
-        >
-          Home
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden tabular-nums text-xs font-medium text-stone-400 sm:inline">
+            {balance} cr
+          </span>
+          <button
+            type="button"
+            onClick={openBuyCredits}
+            className="rounded-full bg-gradient-to-r from-rose-500 to-violet-600 px-2.5 py-1.5 font-display text-[11px] font-semibold text-white shadow-md transition hover:brightness-110 sm:px-3 sm:text-xs"
+          >
+            Buy
+          </button>
+          <Link
+            to="/"
+            className="hidden rounded-full border border-stone-700 bg-stone-800/80 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:bg-stone-800 sm:inline"
+          >
+            Home
+          </Link>
+        </div>
       </header>
 
       <div
         ref={listRef}
-        className="flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-4 sm:px-4"
+        className="flex flex-1 flex-col gap-3 overflow-y-auto bg-stone-950 px-3 py-4 sm:px-4"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
@@ -165,11 +185,11 @@ export function ChatPage() {
               className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm sm:max-w-[70%] ${
                 m.role === 'user'
                   ? 'rounded-br-md bg-gradient-to-br from-rose-500 to-violet-600 text-white'
-                  : 'rounded-bl-md bg-white text-stone-800 ring-1 ring-stone-200'
+                  : 'rounded-bl-md bg-stone-800 text-stone-100 ring-1 ring-stone-700'
               }`}
             >
               {m.role === 'them' && (
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-rose-500">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-rose-400">
                   {fn}
                 </p>
               )}
@@ -179,7 +199,7 @@ export function ChatPage() {
         ))}
         {themTyping && (
           <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-md bg-white px-4 py-3 text-sm text-stone-500 ring-1 ring-stone-200">
+            <div className="rounded-2xl rounded-bl-md bg-stone-800 px-4 py-3 text-sm text-stone-400 ring-1 ring-stone-700">
               <span className="inline-flex gap-1">
                 <span className="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:-0.2s]" />
                 <span className="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:-0.1s]" />
@@ -190,7 +210,20 @@ export function ChatPage() {
         )}
       </div>
 
-      <div className="sticky bottom-0 border-t border-stone-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
+      <div className="border-t border-stone-800 bg-stone-900 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
+        {balance < CREDITS_PER_MESSAGE && (
+          <p className="mx-auto mb-2 max-w-3xl rounded-xl border border-amber-500/30 bg-amber-950/50 px-3 py-2 text-center text-xs font-medium text-amber-100/90 sm:text-sm">
+            You’re out of credits.{' '}
+            <button
+              type="button"
+              className="font-semibold text-rose-300 underline decoration-rose-300/60 hover:text-rose-200"
+              onClick={openBuyCredits}
+            >
+              Buy credits
+            </button>{' '}
+            to keep chatting.
+          </p>
+        )}
         <form
           className="mx-auto flex max-w-3xl gap-2"
           onSubmit={(e) => {
@@ -208,11 +241,11 @@ export function ChatPage() {
             placeholder={`Message ${fn}…`}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="min-w-0 flex-1 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-violet-500/25 transition placeholder:text-stone-400 focus:border-violet-400 focus:bg-white focus:ring-4"
+            className="min-w-0 flex-1 rounded-2xl border border-stone-700 bg-stone-800 px-4 py-3 text-stone-100 outline-none ring-violet-500/30 transition placeholder:text-stone-500 focus:border-violet-500 focus:ring-4"
           />
           <button
             type="submit"
-            disabled={!draft.trim() || themTyping}
+            disabled={!draft.trim() || themTyping || balance < CREDITS_PER_MESSAGE}
             className="shrink-0 rounded-2xl bg-gradient-to-r from-rose-500 to-violet-600 px-5 py-3 font-display text-sm font-semibold text-white shadow-md transition enabled:hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send

@@ -1,3 +1,5 @@
+import { useCredits } from '../../contexts/CreditsContext'
+
 const TIERS = [
   {
     name: 'Start free',
@@ -17,6 +19,8 @@ const TIERS = [
 ] as const
 
 export function PricingPreview() {
+  const { openBuyCredits } = useCredits()
+
   return (
     <section className="border-t border-stone-200 bg-stone-950 px-4 py-14 text-white sm:py-16">
       <div className="mx-auto max-w-7xl">
@@ -27,8 +31,8 @@ export function PricingPreview() {
           How pricing could look
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-stone-400 sm:text-base">
-          No checkout on this demo — UI placeholder for future plans. No per-person pricing; credits
-          unlock chat time across the girls you like most.
+          Credit packs add instantly in this demo (no real card charge). Later: checkout + receipts.
+          Credits unlock chat time across the girls you like most.
         </p>
         <ul className="mt-10 grid gap-4 sm:grid-cols-3">
           {TIERS.map((tier) => (
@@ -42,6 +46,15 @@ export function PricingPreview() {
             >
               <h3 className="font-display text-lg font-bold">{tier.name}</h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-400">{tier.blurb}</p>
+              {tier.highlight && (
+                <button
+                  type="button"
+                  onClick={openBuyCredits}
+                  className="mt-4 w-full rounded-xl bg-white py-2.5 font-display text-sm font-semibold text-stone-900 transition hover:bg-stone-100"
+                >
+                  Buy credits
+                </button>
+              )}
             </li>
           ))}
         </ul>

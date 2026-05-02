@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { MOCK_PROFILES } from '../../data/mockProfiles'
 import type { MockProfile } from '../../types/profile'
 import { readFunnelPreferences } from '../../utils/funnelPreferences'
+import { CreditsDock } from '../credits/CreditsDock'
 import { Benefits } from './Benefits'
 import { ConversionFunnel } from './ConversionFunnel'
 import { Footer } from './Footer'
@@ -84,11 +85,14 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 antialiased">
-      <Hero
-        onStartChat={scrollToBrowse}
-        onBrowseGirls={scrollToBrowse}
-        funnelVibes={funnelVibes}
-      />
+      <div className="relative">
+        <Hero
+          onStartChat={scrollToBrowse}
+          onBrowseGirls={scrollToBrowse}
+          funnelVibes={funnelVibes}
+        />
+        <CreditsDock />
+      </div>
       <ProfileGrid profiles={orderedProfiles} onChatNow={handleChatNow} />
       <Benefits />
       <PricingPreview />
