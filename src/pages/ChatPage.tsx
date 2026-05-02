@@ -178,9 +178,9 @@ export function ChatPage({ profileId }: ChatPageProps) {
       <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-3 py-3 sm:px-4">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          aria-label="Go back"
+          aria-label="Back to home"
         >
           <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -197,12 +197,6 @@ export function ChatPage({ profileId }: ChatPageProps) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="tabular-nums text-xs font-medium text-slate-500">{balance} cr</span>
-          <Link
-            to="/"
-            className="hidden rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-100 sm:inline"
-          >
-            Home
-          </Link>
         </div>
       </header>
 

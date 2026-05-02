@@ -97,7 +97,8 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               Sign in to chat
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Create a free account or sign in to message profiles.
+              Create a free account or sign in to message profiles. Your account is stored in Supabase
+              (same secure database as your profile when you use the Profile tab).
             </p>
           </div>
           <button

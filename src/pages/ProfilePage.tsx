@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import { fetchMemberProfile, upsertMemberProfile } from '../lib/api/memberProfile'
+import { tryGetSupabaseBrowserClient } from '../lib/supabase/client'
 import {
   PROFILE_AGES,
   PROFILE_BIOS,
@@ -70,12 +73,90 @@ function PickSection({ title, hint, children }: { title: string; hint?: string; 
 const inputClass =
   'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25'
 
+function formatMemberSince(createdAt: string | undefined): string {
+  if (!createdAt) return 'Member since —'
+  const d = new Date(createdAt)
+  if (Number.isNaN(d.getTime())) return 'Member since —'
+  return `Member since ${new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(d)}`
+}
+
 export function ProfilePage() {
+  const { user, session } = useAuth()
+  const supabase = tryGetSupabaseBrowserClient()
+  const useRemote = Boolean(session && supabase && user?.id)
+
   const [profile, setProfile] = useState<UserProfileDraft>(() => readUserProfile())
+  const [remoteLoading, setRemoteLoading] = useState(false)
+  const [remoteHydrated, setRemoteHydrated] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!session) {
+      setProfile(readUserProfile())
+      setRemoteHydrated(false)
+    }
+  }, [session])
+
+  useEffect(() => {
+    if (!useRemote || !user?.id || !supabase) {
+      setRemoteLoading(false)
+      setRemoteHydrated(false)
+      return
+    }
+
+    let cancelled = false
+    setRemoteHydrated(false)
+    setRemoteLoading(true)
+
+    void (async () => {
+      try {
+        const row = await fetchMemberProfile(supabase, user.id)
+        if (cancelled) return
+        setProfile(row ?? { ...EMPTY_USER_PROFILE })
+        setSaveMessage(null)
+      } catch (e) {
+        if (!cancelled) {
+          setSaveMessage(e instanceof Error ? e.message : 'Could not load profile')
+          setProfile(readUserProfile())
+        }
+      } finally {
+        if (!cancelled) {
+          setRemoteLoading(false)
+          setRemoteHydrated(true)
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [useRemote, user?.id, supabase, session])
+
+  useEffect(() => {
+    if (useRemote) return
     writeUserProfile(profile)
-  }, [profile])
+  }, [profile, useRemote])
+
+  useEffect(() => {
+    if (!useRemote || !user?.id || !supabase || !remoteHydrated || remoteLoading) return
+
+    setSaveStatus('saving')
+    const t = window.setTimeout(() => {
+      void upsertMemberProfile(supabase, user.id, profile)
+        .then(() => {
+          setSaveStatus('saved')
+          setSaveMessage(null)
+          window.setTimeout(() => setSaveStatus('idle'), 2000)
+        })
+        .catch((e) => {
+          setSaveStatus('error')
+          setSaveMessage(e instanceof Error ? e.message : 'Could not save profile')
+        })
+    }, 750)
+
+    return () => window.clearTimeout(t)
+  }, [profile, useRemote, user?.id, supabase, remoteHydrated, remoteLoading])
 
   const pct = useMemo(() => profileCompletionPercent(profile), [profile])
 
@@ -85,8 +166,10 @@ export function ProfilePage() {
 
   const reset = useCallback(() => {
     setProfile({ ...EMPTY_USER_PROFILE })
-    writeUserProfile({ ...EMPTY_USER_PROFILE })
-  }, [])
+    if (!useRemote) {
+      writeUserProfile({ ...EMPTY_USER_PROFILE })
+    }
+  }, [useRemote])
 
   const displayName = profile.displayName.trim() || 'You'
   const handle = profile.displayName.trim()
@@ -100,10 +183,36 @@ export function ProfilePage() {
 
   const interestSet = useMemo(() => new Set(parseInterests(profile.interests)), [profile.interests])
 
+  const syncHint = useMemo(() => {
+    if (useRemote && remoteLoading) return 'Loading your profile from your account…'
+    if (useRemote && saveStatus === 'saving') return 'Saving to your account…'
+    if (useRemote && saveStatus === 'saved') return 'Saved to your account.'
+    if (useRemote && saveStatus === 'error' && saveMessage) return saveMessage
+    if (useRemote && remoteHydrated) return 'Changes save automatically to your account (private).'
+    if (session && !supabase) return 'Add Supabase keys in .env.local to sync this profile to the cloud.'
+    if (!session) return 'Saved on this device. Sign in to store your profile with your account.'
+    return null
+  }, [
+    useRemote,
+    remoteLoading,
+    remoteHydrated,
+    saveStatus,
+    saveMessage,
+    session,
+    supabase,
+  ])
+
+  const memberSinceLabel = useMemo(() => formatMemberSince(user?.created_at), [user?.created_at])
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <h1 className="sr-only">Profile</h1>
       <div className="mx-auto max-w-lg space-y-6 px-4 py-6 sm:px-6">
+        {syncHint ? (
+          <p className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-xs text-slate-600 shadow-sm">
+            {syncHint}
+          </p>
+        ) : null}
         <section
           className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4 shadow-sm shadow-sky-900/5"
           aria-labelledby="profile-strength-label"
@@ -146,10 +255,12 @@ export function ProfilePage() {
             <p className="mt-1 text-sm text-slate-500">Pick a tagline below</p>
           )}
           <p className="mt-1 text-xs text-slate-500">@{handle}</p>
-          <p className="mt-2 text-xs text-slate-500">Member since May 2026</p>
+          <p className="mt-2 text-xs text-slate-500">{memberSinceLabel}</p>
         </section>
 
-        <section className="space-y-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <section
+          className={`space-y-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 ${remoteLoading ? 'pointer-events-none opacity-60' : ''}`}
+        >
           <h3 className="font-display text-sm font-bold uppercase tracking-wide text-slate-500">
             Your details
           </h3>
