@@ -61,7 +61,7 @@ export function recordChatOpened(profileId: string) {
   if (!id) return
   const now = Date.now()
   const rest = readRaw().filter((e) => e.profileId !== id)
-  const next = [{ profileId: id, openedAt: now }, ...rest].slice(0, 30)
+  const next = [{ profileId: id, openedAt: now }, ...rest]
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   } catch {

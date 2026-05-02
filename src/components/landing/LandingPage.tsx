@@ -1,6 +1,10 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MOCK_PROFILES } from '../../data/mockProfiles'
+import {
+  getActiveProfiles,
+  getCatalogVersion,
+  subscribeCompanionCatalog,
+} from '../../data/mockProfiles'
 import type { MockProfile } from '../../types/profile'
 import {
   readFunnelPreferences,
@@ -14,6 +18,11 @@ import { ProfileGrid } from './ProfileGrid'
 export function LandingPage() {
   const navigate = useNavigate()
   const [showFunnel, setShowFunnel] = useState(() => !readFunnelSkippedThisSession())
+  const catalogRevision = useSyncExternalStore(
+    subscribeCompanionCatalog,
+    getCatalogVersion,
+    () => 0,
+  )
 
   const handleChatNow = useCallback(
     (profile: MockProfile) => {
@@ -28,14 +37,16 @@ export function LandingPage() {
   }, [])
 
   const orderedProfiles = useMemo(() => {
-    if (showFunnel) return MOCK_PROFILES
+    void catalogRevision
+    const base = getActiveProfiles()
+    if (showFunnel) return base
 
     const prefs = readFunnelPreferences()
-    if (!prefs) return MOCK_PROFILES
+    if (!prefs) return base
 
     const hasVibes = prefs.vibes.length > 0
     const ageAny = prefs.ageMin === 18 && prefs.ageMax === 99
-    if (!hasVibes && ageAny) return MOCK_PROFILES
+    if (!hasVibes && ageAny) return base
 
     const score = (p: MockProfile) => {
       let s = 0
@@ -49,8 +60,8 @@ export function LandingPage() {
       return s
     }
 
-    return [...MOCK_PROFILES].sort((a, b) => score(b) - score(a))
-  }, [showFunnel])
+    return [...base].sort((a, b) => score(b) - score(a))
+  }, [showFunnel, catalogRevision])
 
   if (showFunnel) {
     return <ConversionFunnel onComplete={completeFunnel} />

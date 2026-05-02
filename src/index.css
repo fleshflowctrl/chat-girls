@@ -16,3 +16,29 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Subtle motion on the visible “New” pill (opaque badge hides a layer behind it, so we animate the pill). */
+@keyframes profile-new-pill-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgb(14 165 233 / 0.28);
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.92;
+    box-shadow: 0 0 0 6px rgb(14 165 233 / 0);
+  }
+}
+
+.profile-new-pill-pulse {
+  animation: profile-new-pill-pulse 2.8s ease-in-out infinite;
+  will-change: transform, opacity, box-shadow;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-new-pill-pulse {
+    animation: none;
+  }
+}

@@ -3,6 +3,35 @@ import type { MockProfile } from '../types/profile'
 /**
  * Static mock profiles — replace with `GET /api/profiles` (or similar) when backend exists.
  */
+/** In-memory catalog after a successful Supabase fetch (chat routes read this too). */
+let runtimeProfiles: MockProfile[] | null = null
+let catalogVersion = 0
+
+export function getCatalogVersion(): number {
+  return catalogVersion
+}
+
+export function subscribeCompanionCatalog(callback: () => void) {
+  if (typeof window === 'undefined') {
+    return () => {}
+  }
+  const fn = () => callback()
+  window.addEventListener('companion-catalog-updated', fn)
+  return () => window.removeEventListener('companion-catalog-updated', fn)
+}
+
+export function setRuntimeCompanionProfiles(profiles: MockProfile[]) {
+  runtimeProfiles = profiles.length ? profiles : null
+  catalogVersion += 1
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('companion-catalog-updated'))
+  }
+}
+
+export function getActiveProfiles(): MockProfile[] {
+  return runtimeProfiles ?? MOCK_PROFILES
+}
+
 export const MOCK_PROFILES: MockProfile[] = [
   {
     id: '1',
@@ -203,5 +232,5 @@ export const MOCK_PROFILES: MockProfile[] = [
 ]
 
 export function getProfileById(id: string): MockProfile | undefined {
-  return MOCK_PROFILES.find((p) => p.id === id)
+  return getActiveProfiles().find((p) => p.id === id)
 }

@@ -19,9 +19,9 @@ export function ProfileGrid({ profiles, onChatNow }: ProfileGridProps) {
             No profiles to show yet.
           </p>
         ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+          <ul className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {profiles.map((profile) => (
-              <li key={profile.id}>
+              <li key={profile.id} className="flex h-full min-h-0">
                 <ProfileCard profile={profile} onChatNow={onChatNow} />
               </li>
             ))}
