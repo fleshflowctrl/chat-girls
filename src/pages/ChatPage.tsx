@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useCredits } from '../contexts/CreditsContext'
 import { CREDITS_PER_MESSAGE } from '../constants/credits'
 import { getProfileById } from '../data/mockProfiles'
+import { recordChatOpened } from '../utils/recentChats'
 import type { ChatMessage } from '../types/chat'
 
 const MOCK_REPLIES = [
@@ -30,8 +31,11 @@ function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-export function ChatPage() {
-  const { profileId } = useParams<{ profileId: string }>()
+type ChatPageProps = {
+  profileId: string
+}
+
+export function ChatPage({ profileId }: ChatPageProps) {
   const navigate = useNavigate()
   const { balance, trySpendCredits, openBuyCredits } = useCredits()
   const listRef = useRef<HTMLDivElement>(null)
@@ -41,6 +45,10 @@ export function ChatPage() {
     () => (profileId ? getProfileById(profileId) : undefined),
     [profileId],
   )
+
+  useEffect(() => {
+    if (profileId && profile) recordChatOpened(profileId)
+  }, [profileId, profile])
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     if (!profileId) return []
@@ -106,10 +114,6 @@ export function ChatPage() {
     }, delay)
   }, [draft, profile, themTyping, trySpendCredits, openBuyCredits])
 
-  if (!profileId) {
-    return <Navigate to="/" replace />
-  }
-
   if (!profile) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-center text-white">
@@ -128,8 +132,8 @@ export function ChatPage() {
   const fn = firstName(profile.name)
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-slate-950">
-      <header className="flex items-center gap-3 border-b border-slate-800 bg-slate-900 px-3 py-3 sm:px-4">
+    <div className="flex h-[100dvh] min-h-0 flex-col bg-slate-950">
+      <header className="flex shrink-0 items-center gap-3 border-b border-slate-800 bg-slate-900 px-3 py-3 sm:px-4">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -171,7 +175,7 @@ export function ChatPage() {
 
       <div
         ref={listRef}
-        className="flex flex-1 flex-col gap-3 overflow-y-auto bg-slate-950 px-3 py-4 sm:px-4"
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain bg-slate-950 px-3 py-4 sm:px-4"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
@@ -210,7 +214,7 @@ export function ChatPage() {
         )}
       </div>
 
-      <div className="border-t border-slate-800 bg-slate-900 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
+      <div className="shrink-0 border-t border-slate-800 bg-slate-900 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
         {balance < CREDITS_PER_MESSAGE && (
           <p className="mx-auto mb-2 max-w-3xl rounded-xl border border-amber-500/25 bg-slate-800/80 px-3 py-2 text-center text-xs font-medium text-amber-100/90 sm:text-sm">
             You’re out of credits.{' '}

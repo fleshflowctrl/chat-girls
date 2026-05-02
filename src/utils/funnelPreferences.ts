@@ -1,5 +1,40 @@
 /** Session keys — written when the conversion funnel completes. */
 
+/** Session-only: funnel runs again each new browser session until completed once. */
+export const FUNNEL_SKIP_SESSION_KEY = 'velvet_funnel_skipped_this_session'
+
+export function readFunnelSkippedThisSession(): boolean {
+  try {
+    return sessionStorage.getItem(FUNNEL_SKIP_SESSION_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export const FUNNEL_SKIP_EVENT = 'velvet-funnel-skip'
+
+export function writeFunnelSkippedThisSession() {
+  try {
+    sessionStorage.setItem(FUNNEL_SKIP_SESSION_KEY, '1')
+  } catch {
+    /* private / blocked storage */
+  }
+  window.dispatchEvent(new Event(FUNNEL_SKIP_EVENT))
+}
+
+export function subscribeFunnelSkipSession(callback: () => void) {
+  const onCustom = () => callback()
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === FUNNEL_SKIP_SESSION_KEY || e.key === null) callback()
+  }
+  window.addEventListener(FUNNEL_SKIP_EVENT, onCustom)
+  window.addEventListener('storage', onStorage)
+  return () => {
+    window.removeEventListener(FUNNEL_SKIP_EVENT, onCustom)
+    window.removeEventListener('storage', onStorage)
+  }
+}
+
 export const FUNNEL_VIBES_KEY = 'velvet_funnel_vibes'
 export const FUNNEL_AGE_MIN_KEY = 'velvet_funnel_age_min'
 export const FUNNEL_AGE_MAX_KEY = 'velvet_funnel_age_max'
