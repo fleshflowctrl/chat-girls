@@ -11,56 +11,54 @@ export function Hero({ onStartChat, onBrowseGirls, funnelVibes = [] }: HeroProps
   const subline = buildHeroSublineFromVibes(funnelVibes)
   return (
     <section
-      className="relative overflow-hidden bg-stone-950 px-4 pb-16 pt-14 sm:pb-20 sm:pt-20 md:pt-24"
+      className="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-b from-slate-50 via-white to-slate-50 px-4 pb-16 pt-14 sm:pb-20 sm:pt-20 md:pt-24"
       aria-labelledby="hero-heading"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(124,58,237,0.35),transparent)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_-15%,rgba(14,116,144,0.06),transparent)]"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_100%_50%,rgba(225,29,72,0.12),transparent)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_100%_0%,rgba(51,65,85,0.04),transparent)]"
         aria-hidden
       />
       <div className="relative mx-auto max-w-3xl text-center">
-        <p className="mb-3 font-display text-xs font-semibold uppercase tracking-[0.2em] text-rose-300/90 sm:text-sm">
-          Premium private chat
+        <p className="mb-3 font-display text-xs font-semibold uppercase tracking-[0.2em] text-sky-800 sm:text-sm">
+          Private messaging
         </p>
         <h1
           id="hero-heading"
-          className="font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.25rem]"
+          className="font-display text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl md:text-5xl lg:text-[3.25rem]"
         >
           Discreet chats
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-stone-300 sm:text-lg">
-          {subline}
-        </p>
+        <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-slate-600 sm:text-lg">{subline}</p>
         <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center sm:gap-4">
           <button
             type="button"
             onClick={onStartChat}
-            className="rounded-full bg-gradient-to-r from-rose-500 to-violet-600 px-8 py-3.5 font-display text-sm font-semibold text-white shadow-lg shadow-rose-900/40 transition hover:brightness-110 active:scale-[0.98]"
+            className="rounded-full bg-slate-900 px-8 py-3.5 font-display text-sm font-semibold text-white shadow-md shadow-slate-900/10 transition hover:bg-slate-800 active:scale-[0.98]"
           >
             Start chatting
           </button>
           <button
             type="button"
             onClick={onBrowseGirls}
-            className="rounded-full border border-white/20 bg-white/5 px-8 py-3.5 font-display text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10 active:scale-[0.98]"
+            className="rounded-full border border-slate-300 bg-white px-8 py-3.5 font-display text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-[0.98]"
           >
             Browse girls
           </button>
         </div>
-        <p className="mt-6 text-sm text-stone-400">
-          <span className="text-stone-300">Private</span>
-          <span className="mx-2 text-stone-600" aria-hidden>
+        <p className="mt-6 text-sm text-slate-500">
+          <span className="text-slate-700">Private</span>
+          <span className="mx-2 text-slate-300" aria-hidden>
             •
           </span>
-          <span className="text-stone-300">Instant</span>
-          <span className="mx-2 text-stone-600" aria-hidden>
+          <span className="text-slate-700">Secure</span>
+          <span className="mx-2 text-slate-300" aria-hidden>
             •
           </span>
-          <span className="text-stone-300">18+ only</span>
+          <span className="text-slate-700">18+ only</span>
         </p>
       </div>
     </section>

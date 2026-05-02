@@ -84,7 +84,7 @@ export function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 antialiased">
+    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased">
       <div className="relative">
         <Hero
           onStartChat={scrollToBrowse}

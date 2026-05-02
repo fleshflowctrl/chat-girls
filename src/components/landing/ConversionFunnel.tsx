@@ -86,13 +86,13 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
   }, [onComplete, resolveAgeRange, vibeTags])
 
   return (
-    <div className="fixed inset-0 z-[100] flex min-h-[100dvh] flex-col bg-stone-950 text-white">
+    <div className="fixed inset-0 z-[100] flex min-h-[100dvh] flex-col bg-slate-950 text-white">
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_-10%,rgba(124,58,237,0.4),transparent)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_-10%,rgba(14,116,144,0.18),transparent)]"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_100%_100%,rgba(225,29,72,0.15),transparent)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_100%_100%,rgba(51,65,85,0.35),transparent)]"
         aria-hidden
       />
 
@@ -117,7 +117,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i + 1 === step
-                  ? 'w-5 bg-gradient-to-r from-rose-400 to-violet-400 sm:w-8'
+                  ? 'w-5 bg-sky-500 sm:w-8'
                   : i + 1 < step
                     ? 'w-1.5 bg-white/50 sm:w-2'
                     : 'w-1.5 bg-white/15 sm:w-2'
@@ -133,7 +133,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
       <main className="relative flex flex-1 flex-col justify-center overflow-y-auto px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-8">
         {step === 1 && (
           <div className="mx-auto w-full max-w-lg">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.25em] text-rose-300/90">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.25em] text-sky-300/90">
               Private chat
             </p>
             <h1 className="mt-3 text-center font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
@@ -152,7 +152,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
             <button
               type="button"
               onClick={goNext}
-              className="mx-auto mt-10 flex w-full max-w-sm items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-violet-600 py-4 font-display text-base font-semibold text-white shadow-xl shadow-rose-900/40 transition hover:brightness-110 active:scale-[0.99] sm:py-4 sm:text-lg"
+              className="mx-auto mt-10 flex w-full max-w-sm items-center justify-center rounded-full bg-sky-600 py-4 font-display text-base font-semibold text-white shadow-lg shadow-sky-950/30 transition hover:bg-sky-700 active:scale-[0.99] sm:py-4 sm:text-lg"
             >
               Continue
             </button>
@@ -174,7 +174,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
               <button
                 type="button"
                 onClick={goNext}
-                className="w-full rounded-full bg-gradient-to-r from-rose-500 to-violet-600 py-4 font-display text-base font-semibold text-white shadow-lg transition hover:brightness-110 active:scale-[0.99]"
+                className="w-full rounded-full bg-sky-600 py-4 font-display text-base font-semibold text-white shadow-lg shadow-sky-950/25 transition hover:bg-sky-700 active:scale-[0.99]"
               >
                 I’m 18 or older
               </button>
@@ -190,7 +190,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
 
         {step === 3 && (
           <div className="mx-auto w-full max-w-lg">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-rose-300/80">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-sky-300/80">
               Your taste
             </p>
             <h2 className="mt-3 text-center font-display text-2xl font-bold tracking-tight sm:text-3xl">
@@ -209,7 +209,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
                     onClick={() => toggleVibe(tag)}
                     className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                       active
-                        ? 'bg-gradient-to-r from-rose-500 to-violet-600 text-white shadow-md'
+                        ? 'bg-sky-600 text-white shadow-md shadow-sky-950/20'
                         : 'border border-white/15 bg-white/5 text-stone-200 hover:border-white/25 hover:bg-white/10'
                     }`}
                   >
@@ -230,7 +230,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
 
         {step === 4 && (
           <div className="mx-auto w-full max-w-lg">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-violet-300/90">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-sky-300/90">
               Almost there
             </p>
             <h2 className="mt-3 text-center font-display text-2xl font-bold tracking-tight sm:text-3xl">
@@ -255,7 +255,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                       !useCustomAge && agePresetId === p.id
-                        ? 'bg-gradient-to-r from-rose-500 to-violet-600 text-white shadow-md'
+                        ? 'bg-sky-600 text-white shadow-md shadow-sky-950/20'
                         : 'border border-white/15 bg-white/5 text-stone-200 hover:border-white/25 hover:bg-white/10'
                     }`}
                   >
@@ -270,7 +270,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
                     type="checkbox"
                     checked={useCustomAge}
                     onChange={(e) => setUseCustomAge(e.target.checked)}
-                    className="size-4 rounded border-stone-500 text-violet-600 focus:ring-violet-500"
+                    className="size-4 rounded border-stone-500 text-sky-600 focus:ring-sky-500"
                   />
                   Use custom min / max
                 </label>
@@ -286,7 +286,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
                         onChange={(e) =>
                           setAgeMinCustom(Math.min(99, Math.max(18, Number(e.target.value) || 18)))
                         }
-                        className="rounded-xl border border-white/10 bg-stone-900/80 px-3 py-2 text-base text-white outline-none focus:ring-2 focus:ring-violet-500"
+                        className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-base text-white outline-none focus:ring-2 focus:ring-sky-500"
                       />
                     </label>
                     <span className="mt-5 text-stone-500">—</span>
@@ -300,7 +300,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
                         onChange={(e) =>
                           setAgeMaxCustom(Math.min(99, Math.max(18, Number(e.target.value) || 99)))
                         }
-                        className="rounded-xl border border-white/10 bg-stone-900/80 px-3 py-2 text-base text-white outline-none focus:ring-2 focus:ring-violet-500"
+                        className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-base text-white outline-none focus:ring-2 focus:ring-sky-500"
                       />
                     </label>
                   </div>
@@ -311,7 +311,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
             <button
               type="button"
               onClick={goNext}
-              className="mx-auto mt-10 flex w-full max-w-sm items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-violet-600 py-4 font-display text-base font-semibold text-white shadow-lg transition hover:brightness-110 active:scale-[0.99]"
+              className="mx-auto mt-10 flex w-full max-w-sm items-center justify-center rounded-full bg-sky-600 py-4 font-display text-base font-semibold text-white shadow-lg shadow-sky-950/25 transition hover:bg-sky-700 active:scale-[0.99]"
             >
               Continue
             </button>
@@ -320,7 +320,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
 
         {step === 5 && (
           <div className="mx-auto w-full max-w-lg">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400/90">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-sky-300/90">
               You’re in
             </p>
             <h2 className="mt-3 text-center font-display text-2xl font-bold tracking-tight sm:text-3xl">
@@ -328,7 +328,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
             </h2>
             <ul className="mx-auto mt-8 max-w-md space-y-4 text-left">
               <li className="flex gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/20 text-sky-300">
                   <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
@@ -339,7 +339,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
                 </div>
               </li>
               <li className="flex gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 text-violet-300">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-500/25 text-slate-300">
                   <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -350,7 +350,7 @@ export function ConversionFunnel({ onComplete }: ConversionFunnelProps) {
                 </div>
               </li>
               <li className="flex gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-600/20 text-sky-200">
                   <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>

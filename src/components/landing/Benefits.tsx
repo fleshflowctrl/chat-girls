@@ -45,25 +45,25 @@ const ITEMS = [
 
 export function Benefits() {
   return (
-    <section className="border-t border-stone-200 bg-white px-4 py-14 sm:py-16">
+    <section className="border-t border-slate-200 bg-white px-4 py-14 sm:py-16">
       <div className="mx-auto max-w-7xl">
-        <h2 className="font-display text-center text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+        <h2 className="font-display text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           Why guys keep coming back
         </h2>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-stone-500 sm:text-base">
+        <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600 sm:text-base">
           Built for adults who want chemistry without the noise of traditional apps.
         </p>
         <ul className="mt-10 grid gap-6 sm:grid-cols-3">
           {ITEMS.map((item) => (
             <li
               key={item.title}
-              className="rounded-2xl border border-stone-100 bg-stone-50/80 p-6 shadow-sm ring-1 ring-stone-100"
+              className="rounded-2xl border border-slate-200 bg-slate-50/90 p-6 shadow-sm ring-1 ring-slate-100"
             >
-              <div className="mb-4 inline-flex rounded-xl bg-violet-100 p-2.5 text-violet-700">
+              <div className="mb-4 inline-flex rounded-xl bg-sky-100 p-2.5 text-sky-800">
                 {item.icon}
               </div>
-              <h3 className="font-display text-lg font-bold text-stone-900">{item.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">{item.body}</p>
+              <h3 className="font-display text-lg font-bold text-slate-900">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.body}</p>
             </li>
           ))}
         </ul>

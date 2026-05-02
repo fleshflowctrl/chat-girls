@@ -112,12 +112,12 @@ export function ChatPage() {
 
   if (!profile) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-stone-950 px-4 text-center text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-center text-white">
         <p className="font-display text-lg font-semibold">This profile isn’t available.</p>
-        <p className="mt-2 text-sm text-stone-400">She may have been updated or removed.</p>
+        <p className="mt-2 text-sm text-slate-400">She may have been updated or removed.</p>
         <Link
           to="/"
-          className="mt-8 rounded-full bg-white px-6 py-2.5 font-display text-sm font-semibold text-stone-900 transition hover:bg-stone-200"
+          className="mt-8 rounded-full bg-sky-700 px-6 py-2.5 font-display text-sm font-semibold text-white transition hover:bg-sky-600"
         >
           Back to browse
         </Link>
@@ -128,12 +128,12 @@ export function ChatPage() {
   const fn = firstName(profile.name)
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-stone-950">
-      <header className="flex items-center gap-3 border-b border-stone-800 bg-stone-900 px-3 py-3 sm:px-4">
+    <div className="flex min-h-[100dvh] flex-col bg-slate-950">
+      <header className="flex items-center gap-3 border-b border-slate-800 bg-slate-900 px-3 py-3 sm:px-4">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full text-stone-400 transition hover:bg-stone-800 hover:text-white"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-800 hover:text-white"
           aria-label="Go back"
         >
           <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -143,26 +143,26 @@ export function ChatPage() {
         <img
           src={profile.imageUrl}
           alt=""
-          className="size-11 shrink-0 rounded-full object-cover ring-2 ring-rose-500/40"
+          className="size-11 shrink-0 rounded-full object-cover ring-2 ring-sky-700/50"
         />
         <div className="min-w-0 flex-1">
           <h1 className="truncate font-display text-base font-bold text-white">{profile.name}</h1>
-          <p className="truncate text-xs text-rose-300/90">{profile.moodLabel}</p>
+          <p className="truncate text-xs text-sky-300/90">{profile.moodLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="hidden tabular-nums text-xs font-medium text-stone-400 sm:inline">
+          <span className="hidden tabular-nums text-xs font-medium text-slate-400 sm:inline">
             {balance} cr
           </span>
           <button
             type="button"
             onClick={openBuyCredits}
-            className="rounded-full bg-gradient-to-r from-rose-500 to-violet-600 px-2.5 py-1.5 font-display text-[11px] font-semibold text-white shadow-md transition hover:brightness-110 sm:px-3 sm:text-xs"
+            className="rounded-full bg-sky-700 px-2.5 py-1.5 font-display text-[11px] font-semibold text-white shadow-md transition hover:bg-sky-600 sm:px-3 sm:text-xs"
           >
             Buy
           </button>
           <Link
             to="/"
-            className="hidden rounded-full border border-stone-700 bg-stone-800/80 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:bg-stone-800 sm:inline"
+            className="hidden rounded-full border border-slate-600 bg-slate-800/90 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-800 sm:inline"
           >
             Home
           </Link>
@@ -171,7 +171,7 @@ export function ChatPage() {
 
       <div
         ref={listRef}
-        className="flex flex-1 flex-col gap-3 overflow-y-auto bg-stone-950 px-3 py-4 sm:px-4"
+        className="flex flex-1 flex-col gap-3 overflow-y-auto bg-slate-950 px-3 py-4 sm:px-4"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
@@ -184,12 +184,12 @@ export function ChatPage() {
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm sm:max-w-[70%] ${
                 m.role === 'user'
-                  ? 'rounded-br-md bg-gradient-to-br from-rose-500 to-violet-600 text-white'
-                  : 'rounded-bl-md bg-stone-800 text-stone-100 ring-1 ring-stone-700'
+                  ? 'rounded-br-md bg-sky-800 text-white'
+                  : 'rounded-bl-md bg-slate-800 text-slate-100 ring-1 ring-slate-700'
               }`}
             >
               {m.role === 'them' && (
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-rose-400">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-sky-400">
                   {fn}
                 </p>
               )}
@@ -199,24 +199,24 @@ export function ChatPage() {
         ))}
         {themTyping && (
           <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-md bg-stone-800 px-4 py-3 text-sm text-stone-400 ring-1 ring-stone-700">
+            <div className="rounded-2xl rounded-bl-md bg-slate-800 px-4 py-3 text-sm text-slate-400 ring-1 ring-slate-700">
               <span className="inline-flex gap-1">
-                <span className="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:-0.2s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:-0.1s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-stone-400" />
+                <span className="size-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.2s]" />
+                <span className="size-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.1s]" />
+                <span className="size-1.5 animate-bounce rounded-full bg-slate-400" />
               </span>
             </div>
           </div>
         )}
       </div>
 
-      <div className="border-t border-stone-800 bg-stone-900 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
+      <div className="border-t border-slate-800 bg-slate-900 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
         {balance < CREDITS_PER_MESSAGE && (
-          <p className="mx-auto mb-2 max-w-3xl rounded-xl border border-amber-500/30 bg-amber-950/50 px-3 py-2 text-center text-xs font-medium text-amber-100/90 sm:text-sm">
+          <p className="mx-auto mb-2 max-w-3xl rounded-xl border border-amber-500/25 bg-slate-800/80 px-3 py-2 text-center text-xs font-medium text-amber-100/90 sm:text-sm">
             You’re out of credits.{' '}
             <button
               type="button"
-              className="font-semibold text-rose-300 underline decoration-rose-300/60 hover:text-rose-200"
+              className="font-semibold text-sky-300 underline decoration-sky-400/50 hover:text-sky-200"
               onClick={openBuyCredits}
             >
               Buy credits
@@ -241,12 +241,12 @@ export function ChatPage() {
             placeholder={`Message ${fn}…`}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="min-w-0 flex-1 rounded-2xl border border-stone-700 bg-stone-800 px-4 py-3 text-stone-100 outline-none ring-violet-500/30 transition placeholder:text-stone-500 focus:border-violet-500 focus:ring-4"
+            className="min-w-0 flex-1 rounded-2xl border border-slate-600 bg-slate-800 px-4 py-3 text-slate-100 outline-none ring-sky-600/25 transition placeholder:text-slate-500 focus:border-sky-600 focus:ring-4"
           />
           <button
             type="submit"
             disabled={!draft.trim() || themTyping || balance < CREDITS_PER_MESSAGE}
-            className="shrink-0 rounded-2xl bg-gradient-to-r from-rose-500 to-violet-600 px-5 py-3 font-display text-sm font-semibold text-white shadow-md transition enabled:hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
+            className="shrink-0 rounded-2xl bg-sky-700 px-5 py-3 font-display text-sm font-semibold text-white shadow-md transition enabled:hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send
           </button>

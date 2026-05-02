@@ -3,9 +3,8 @@
 @theme {
   --font-display: 'Outfit', system-ui, sans-serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
-  --color-brand-rose: #e11d48;
-  --color-brand-violet: #7c3aed;
-  --color-brand-dark: #0c0a09;
+  --color-brand-accent: #0c4a6e;
+  --color-brand-dark: #0f172a;
 }
 
 html {

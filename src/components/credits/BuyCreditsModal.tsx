@@ -20,25 +20,25 @@ export function BuyCreditsModal({ open, onClose }: BuyCreditsModalProps) {
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
         aria-label="Close"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-700 bg-stone-900 p-5 shadow-2xl shadow-black/40 sm:p-6">
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-600 bg-slate-900 p-5 shadow-2xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-rose-300/90">Top up</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400/90">Top up</p>
             <h2 id="buy-credits-title" className="mt-1 font-display text-xl font-bold text-white sm:text-2xl">
               Buy message credits
             </h2>
-            <p className="mt-2 text-sm text-stone-400">
+            <p className="mt-2 text-sm text-slate-400">
               Demo checkout — adds credits instantly. Later: card / Apple Pay via your payments provider.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-stone-500 transition hover:bg-stone-800 hover:text-stone-200"
+            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-800 hover:text-slate-200"
             aria-label="Close"
           >
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -53,8 +53,8 @@ export function BuyCreditsModal({ open, onClose }: BuyCreditsModalProps) {
               key={pack.id}
               className={`rounded-2xl border p-4 ${
                 pack.badge
-                  ? 'border-violet-500/40 bg-gradient-to-br from-violet-950/80 to-stone-900 ring-1 ring-violet-500/25'
-                  : 'border-stone-700 bg-stone-800/60'
+                  ? 'border-sky-700/35 bg-slate-800/90 ring-1 ring-sky-900/20'
+                  : 'border-slate-600 bg-slate-800/70'
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -62,13 +62,13 @@ export function BuyCreditsModal({ open, onClose }: BuyCreditsModalProps) {
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-display font-bold text-white">{pack.title}</h3>
                     {pack.badge && (
-                      <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                      <span className="rounded-full bg-sky-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                         {pack.badge}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-stone-400">{pack.blurb}</p>
-                  <p className="mt-2 font-display text-lg font-bold text-rose-200">{pack.credits} credits</p>
+                  <p className="mt-1 text-sm text-slate-400">{pack.blurb}</p>
+                  <p className="mt-2 font-display text-lg font-bold text-sky-200">{pack.credits} credits</p>
                 </div>
                 <button
                   type="button"
@@ -76,7 +76,7 @@ export function BuyCreditsModal({ open, onClose }: BuyCreditsModalProps) {
                     addCredits(pack.credits)
                     onClose()
                   }}
-                  className="shrink-0 rounded-xl bg-gradient-to-r from-rose-500 to-violet-600 px-4 py-2.5 font-display text-sm font-semibold text-white shadow-md transition hover:brightness-105 active:scale-[0.98]"
+                  className="shrink-0 rounded-xl bg-sky-600 px-4 py-2.5 font-display text-sm font-semibold text-white shadow-md transition hover:bg-sky-700 active:scale-[0.98]"
                 >
                   Add to account
                 </button>
