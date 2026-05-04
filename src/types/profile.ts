@@ -14,4 +14,8 @@ export interface MockProfile {
   isVip: boolean
   isHot: boolean
   isNew: boolean
+  /** Longer bio on the companion profile screen */
+  aboutText?: string
+  /** Extra photos (hero remains `imageUrl`); used for thumbnail strip */
+  galleryImageUrls?: string[]
 }

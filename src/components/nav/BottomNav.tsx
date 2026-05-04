@@ -1,6 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useCredits } from '../../contexts/CreditsContext'
 import {
   getTotalUnreadFromSnapshot,
   getUnreadSnapshot,
@@ -8,24 +7,24 @@ import {
 } from '../../utils/chatUnread'
 
 const navBase =
-  'flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold transition sm:text-xs'
-const navIdle = 'text-slate-500'
-const navActive = 'text-sky-600'
+  'flex min-w-0 min-h-[52px] flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-semibold transition sm:text-[13px]'
+const navIdle = 'text-stone-500'
+const navActive = 'text-stone-900'
 
-function IconHome({ className }: { className?: string }) {
+function IconDiscover({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={2}
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2 0v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
       />
     </svg>
   )
 }
 
-function IconChats({ className }: { className?: string }) {
+function IconMessages({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
       <path
@@ -51,7 +50,7 @@ function IconCredits({ className }: { className?: string }) {
   )
 }
 
-function IconProfile({ className }: { className?: string }) {
+function IconMe({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
       <path
@@ -65,13 +64,12 @@ function IconProfile({ className }: { className?: string }) {
 }
 
 export function BottomNav() {
-  const { balance } = useCredits()
   const unreadJson = useSyncExternalStore(subscribeUnreadChats, getUnreadSnapshot, () => '{}')
   const unreadTotal = useMemo(() => getTotalUnreadFromSnapshot(unreadJson), [unreadJson])
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/90 bg-white/95 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-1 shadow-[0_-4px_24px_rgba(15,23,42,0.06)] backdrop-blur-md"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-stone-200/95 bg-warm-canvas pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
       aria-label="Main"
     >
       <div className="mx-auto flex max-w-lg">
@@ -80,42 +78,31 @@ export function BottomNav() {
           end
           className={({ isActive }) => `${navBase} ${isActive ? navActive : navIdle}`}
         >
-          <IconHome className="size-6 shrink-0 sm:size-6" />
-          Home
+          <IconDiscover className="size-7 shrink-0" />
+          Discover
         </NavLink>
         <NavLink
           to="/chats"
-          aria-label={unreadTotal > 0 ? `Chats, ${unreadTotal} unread` : 'Chats'}
+          aria-label={unreadTotal > 0 ? `Messages, ${unreadTotal} unread` : 'Messages'}
           className={({ isActive }) => `${navBase} ${isActive ? navActive : navIdle}`}
         >
           <span className="relative inline-flex">
-            <IconChats className="size-6 shrink-0 sm:size-6" />
+            <IconMessages className="size-7 shrink-0" />
             {unreadTotal > 0 ? (
-              <span className="absolute -right-1 -top-0.5 min-w-[1rem] rounded-full bg-slate-900 px-0.5 text-center font-display text-[9px] font-bold leading-4 text-white ring-2 ring-white">
-                {unreadTotal > 99 ? '99+' : unreadTotal}
+              <span className="absolute -right-1 -top-0.5 flex min-h-[1rem] min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-0.5 font-display text-[9px] font-bold leading-none text-white ring-2 ring-white">
+                {unreadTotal > 9 ? '9+' : unreadTotal}
               </span>
             ) : null}
           </span>
-          Chats
+          Messages
         </NavLink>
-        <NavLink
-          to="/credits"
-          className={({ isActive }) => `${navBase} ${isActive ? navActive : navIdle}`}
-        >
-          <span className="relative inline-flex">
-            <IconCredits className="size-6 shrink-0 sm:size-6" />
-            <span className="absolute -right-1 -top-0.5 min-w-[1rem] rounded-full bg-slate-900 px-0.5 text-center font-display text-[9px] font-bold leading-4 text-white ring-2 ring-white">
-              {balance > 999 ? '999+' : balance}
-            </span>
-          </span>
+        <NavLink to="/credits" className={({ isActive }) => `${navBase} ${isActive ? navActive : navIdle}`}>
+          <IconCredits className="size-7 shrink-0" />
           Credits
         </NavLink>
-        <NavLink
-          to="/profile"
-          className={({ isActive }) => `${navBase} ${isActive ? navActive : navIdle}`}
-        >
-          <IconProfile className="size-6 shrink-0 sm:size-6" />
-          Profile
+        <NavLink to="/profile" className={({ isActive }) => `${navBase} ${isActive ? navActive : navIdle}`}>
+          <IconMe className="size-7 shrink-0" />
+          Me
         </NavLink>
       </div>
     </nav>

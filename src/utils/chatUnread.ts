@@ -24,7 +24,7 @@ export function getUnreadSnapshot(): string {
   }
 }
 
-function parseCounts(raw: string): Record<string, number> {
+export function parseUnreadCounts(raw: string): Record<string, number> {
   try {
     const o = JSON.parse(raw) as unknown
     if (!o || typeof o !== 'object' || Array.isArray(o)) return {}
@@ -39,7 +39,7 @@ function parseCounts(raw: string): Record<string, number> {
 }
 
 export function getTotalUnreadFromSnapshot(raw: string): number {
-  const m = parseCounts(raw)
+  const m = parseUnreadCounts(raw)
   let sum = 0
   for (const n of Object.values(m)) sum += n
   return sum
@@ -58,7 +58,7 @@ function writeCounts(m: Record<string, number>) {
 export function incrementUnread(profileId: string) {
   const id = profileId.trim()
   if (!id) return
-  const m = parseCounts(getUnreadSnapshot())
+  const m = parseUnreadCounts(getUnreadSnapshot())
   m[id] = (m[id] ?? 0) + 1
   writeCounts(m)
 }
@@ -67,7 +67,7 @@ export function incrementUnread(profileId: string) {
 export function clearUnread(profileId: string) {
   const id = profileId.trim()
   if (!id) return
-  const m = parseCounts(getUnreadSnapshot())
+  const m = parseUnreadCounts(getUnreadSnapshot())
   if (!(id in m)) return
   delete m[id]
   writeCounts(m)

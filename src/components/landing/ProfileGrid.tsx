@@ -3,31 +3,25 @@ import { ProfileCard } from './ProfileCard'
 
 type ProfileGridProps = {
   profiles: MockProfile[]
-  onChatNow: (profile: MockProfile) => void
+  onSelectProfile: (profile: MockProfile) => void
 }
 
-export function ProfileGrid({ profiles, onChatNow }: ProfileGridProps) {
+export function ProfileGrid({ profiles, onSelectProfile }: ProfileGridProps) {
   return (
-    <section
-      id="browse"
-      className="bg-slate-50 px-4 py-10 sm:py-12"
-      aria-label="Profiles"
-    >
-      <div className="mx-auto max-w-7xl">
-        {profiles.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center text-slate-500">
-            No profiles to show yet.
-          </p>
-        ) : (
-          <ul className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-            {profiles.map((profile) => (
-              <li key={profile.id} className="flex h-full min-h-0">
-                <ProfileCard profile={profile} onChatNow={onChatNow} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <section id="browse" aria-label="Profiles">
+      {profiles.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 py-16 text-center text-base text-stone-600">
+          No profiles to show yet.
+        </p>
+      ) : (
+        <ul className="mx-auto grid max-w-lg grid-cols-2 gap-3 sm:gap-4">
+          {profiles.map((profile) => (
+            <li key={profile.id} className="min-w-0">
+              <ProfileCard profile={profile} onSelectProfile={onSelectProfile} />
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

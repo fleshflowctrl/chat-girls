@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { useEffect, useLayoutEffect } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { CompanionCatalogBootstrap } from './components/CompanionCatalogBootstrap'
 import { LandingPage } from './components/landing/LandingPage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -7,8 +7,21 @@ import { CreditsProvider } from './contexts/CreditsContext'
 import { AppLayout } from './layouts/AppLayout'
 import { ChatPage } from './pages/ChatPage'
 import { ChatsPage } from './pages/ChatsPage'
+import { CompanionProfilePage } from './pages/CompanionProfilePage'
 import { CreditsPage } from './pages/CreditsPage'
 import { ProfilePage } from './pages/ProfilePage'
+
+/** Each route gets its own scroll position at the top of the window (SPA default is to keep scroll). */
+function ScrollToTopOnNavigate() {
+  const { pathname } = useLocation()
+  useLayoutEffect(() => {
+    const html = document.documentElement
+    html.style.scrollBehavior = 'auto'
+    window.scrollTo(0, 0)
+    html.style.removeProperty('scroll-behavior')
+  }, [pathname])
+  return null
+}
 
 function ChatAuthWall() {
   return (
@@ -45,15 +58,17 @@ function ChatRoute() {
 
 function App() {
   return (
-    <CreditsProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <CreditsProvider>
         <AuthProvider>
+          <ScrollToTopOnNavigate />
           <CompanionCatalogBootstrap />
           <Routes>
             {/* Match chat before the pathless layout so `/chat/:id` is never swallowed by layout ranking. */}
             <Route path="/chat/:profileId" element={<ChatRoute />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/profiles/:profileId" element={<CompanionProfilePage />} />
               <Route path="/chats" element={<ChatsPage />} />
               <Route path="/credits" element={<CreditsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
@@ -61,8 +76,8 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>
-      </BrowserRouter>
-    </CreditsProvider>
+      </CreditsProvider>
+    </BrowserRouter>
   )
 }
 

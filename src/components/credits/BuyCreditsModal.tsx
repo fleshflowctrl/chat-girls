@@ -20,25 +20,29 @@ export function BuyCreditsModal({ open, onClose }: BuyCreditsModalProps) {
     >
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-stone-900/75 backdrop-blur-sm"
         aria-label="Close"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-600 bg-slate-900 p-5 shadow-2xl sm:p-6">
+      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-600 bg-stone-900 p-5 shadow-2xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-sky-400/90">Top up</p>
-            <h2 id="buy-credits-title" className="mt-1 font-display text-xl font-bold text-white sm:text-2xl">
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-300/95">Top up</p>
+            <h2
+              id="buy-credits-title"
+              className="mt-1 font-[family-name:var(--font-brand-serif)] text-xl font-semibold text-white sm:text-2xl"
+            >
               Buy message credits
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
-              Demo checkout — adds credits instantly. Later: card / Apple Pay via your payments provider.
+            <p className="mt-2 text-base leading-relaxed text-stone-300">
+              For now, credits are added instantly for testing. Later you will be able to pay safely by card or
+              wallet.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-800 hover:text-slate-200"
+            className="rounded-full p-3 text-stone-400 transition hover:bg-stone-800 hover:text-stone-100"
             aria-label="Close"
           >
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -53,22 +57,22 @@ export function BuyCreditsModal({ open, onClose }: BuyCreditsModalProps) {
               key={pack.id}
               className={`rounded-2xl border p-4 ${
                 pack.badge
-                  ? 'border-sky-700/35 bg-slate-800/90 ring-1 ring-sky-900/20'
-                  : 'border-slate-600 bg-slate-800/70'
+                  ? 'border-amber-600/40 bg-stone-800/90 ring-1 ring-amber-900/25'
+                  : 'border-stone-600 bg-stone-800/70'
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display font-bold text-white">{pack.title}</h3>
+                    <h3 className="font-display text-lg font-bold text-white">{pack.title}</h3>
                     {pack.badge && (
-                      <span className="rounded-full bg-sky-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                      <span className="rounded-full bg-amber-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                         {pack.badge}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-slate-400">{pack.blurb}</p>
-                  <p className="mt-2 font-display text-lg font-bold text-sky-200">{pack.credits} credits</p>
+                  <p className="mt-1 text-base text-stone-300">{pack.blurb}</p>
+                  <p className="mt-2 font-display text-lg font-bold text-amber-100">{pack.credits} credits</p>
                 </div>
                 <button
                   type="button"
@@ -76,7 +80,7 @@ export function BuyCreditsModal({ open, onClose }: BuyCreditsModalProps) {
                     addCredits(pack.credits)
                     onClose()
                   }}
-                  className="shrink-0 rounded-xl bg-sky-600 px-4 py-2.5 font-display text-sm font-semibold text-white shadow-md transition hover:bg-sky-700 active:scale-[0.98]"
+                  className="min-h-[2.75rem] shrink-0 rounded-xl bg-amber-600 px-4 py-3 font-display text-base font-semibold text-stone-950 shadow-md transition hover:bg-amber-500"
                 >
                   Add to account
                 </button>

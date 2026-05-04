@@ -17,7 +17,7 @@ export function AppLayout() {
       <div
         className={
           showNav
-            ? 'pb-[calc(3.75rem+max(0.35rem,env(safe-area-inset-bottom)))]'
+            ? 'pb-[calc(4.25rem+max(0.35rem,env(safe-area-inset-bottom)))]'
             : 'min-h-[100dvh]'
         }
       >

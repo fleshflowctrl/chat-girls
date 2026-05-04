@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
 import {
   getActiveProfiles,
   getCatalogVersion,
@@ -16,9 +15,18 @@ import { DiscreetNoticeBar } from '../DiscreetNoticeBar'
 import { ConversionFunnel } from './ConversionFunnel'
 import { ProfileGrid } from './ProfileGrid'
 
+function DiscoverHeader() {
+  return (
+    <header className="flex items-center px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-1">
+      <span className="font-[family-name:var(--font-brand-serif)] text-[1.75rem] font-semibold leading-none tracking-tight text-stone-900 sm:text-[1.95rem]">
+        whisper
+      </span>
+    </header>
+  )
+}
+
 export function LandingPage() {
   const navigate = useNavigate()
-  const { session, openAuthModal } = useAuth()
   const [showFunnel, setShowFunnel] = useState(() => !readFunnelSkippedThisSession())
   const catalogRevision = useSyncExternalStore(
     subscribeCompanionCatalog,
@@ -26,15 +34,11 @@ export function LandingPage() {
     () => 0,
   )
 
-  const handleChatNow = useCallback(
+  const handleSelectProfile = useCallback(
     (profile: MockProfile) => {
-      if (session) {
-        navigate(`/chat/${profile.id}`)
-        return
-      }
-      openAuthModal({ returnTo: `/chat/${profile.id}` })
+      navigate(`/profiles/${profile.id}`)
     },
-    [navigate, openAuthModal, session],
+    [navigate],
   )
 
   const completeFunnel = useCallback(() => {
@@ -74,9 +78,22 @@ export function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased">
-      <DiscreetNoticeBar />
-      <ProfileGrid profiles={orderedProfiles} onChatNow={handleChatNow} />
+    <div className="min-h-screen bg-warm-canvas text-stone-900 antialiased">
+      <DiscoverHeader />
+      <DiscreetNoticeBar variant="compact" />
+
+      <main className="mx-auto max-w-lg px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+        <h1 className="font-[family-name:var(--font-brand-serif)] text-[1.5rem] font-semibold leading-snug tracking-tight text-stone-900 sm:text-[1.7rem]">
+          People you might enjoy meeting
+        </h1>
+        <p className="mt-3 text-base leading-relaxed text-stone-700 sm:text-[1.05rem]">
+          Thoughtful introductions. Private, respectful chat at your own pace.
+        </p>
+
+        <div className="mt-6">
+          <ProfileGrid profiles={orderedProfiles} onSelectProfile={handleSelectProfile} />
+        </div>
+      </main>
     </div>
   )
 }

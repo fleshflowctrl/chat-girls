@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { useCredits } from '../contexts/CreditsContext'
 import { CREDITS_PER_MESSAGE } from '../constants/credits'
 import { getProfileById } from '../data/mockProfiles'
+import { ensureChatThread, updateThreadMessages } from '../lib/api/chatThreads'
+import { tryGetSupabaseBrowserClient } from '../lib/supabase/client'
 import { clearUnread, incrementUnread } from '../utils/chatUnread'
 import {
   loadThreadMessages,
@@ -44,21 +47,35 @@ type ChatPageProps = {
 
 export function ChatPage({ profileId }: ChatPageProps) {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const supabase = tryGetSupabaseBrowserClient()
+  const useRemote = Boolean(user?.id && supabase && profileId)
   const { balance, trySpendCredits, openBuyCredits } = useCredits()
   const listRef = useRef<HTMLDivElement>(null)
   const replyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const viewOpenRef = useRef(true)
   /** Bumped on mount/unmount so late reply timers do not touch a new session or call setState after unmount. */
   const generationRef = useRef(0)
+  const threadIdRef = useRef<string | null>(null)
 
   const profile = useMemo(
     () => (profileId ? getProfileById(profileId) : undefined),
     [profileId],
   )
 
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [threadId, setThreadId] = useState<string | null>(null)
+  const [remotePhase, setRemotePhase] = useState<'off' | 'loading' | 'live' | 'err'>('off')
+  const [draft, setDraft] = useState('')
+  const [themTyping, setThemTyping] = useState(false)
+
   useEffect(() => {
-    if (profileId && profile) recordChatOpened(profileId)
-  }, [profileId, profile])
+    threadIdRef.current = threadId
+  }, [threadId])
+
+  useEffect(() => {
+    if (profileId && profile && !useRemote) recordChatOpened(profileId)
+  }, [profileId, profile, useRemote])
 
   useEffect(() => {
     generationRef.current += 1
@@ -70,45 +87,132 @@ export function ChatPage({ profileId }: ChatPageProps) {
     }
   }, [profileId])
 
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    if (!profileId) return []
-    const p = getProfileById(profileId)
-    if (!p) return []
-    const saved = loadThreadMessages(profileId)
-    if (saved) return saved
-    const opener = `Hey… it’s ${firstName(p.name)}. I’ve been hoping you’d message. What’s on your mind?`
-    return [
-      {
-        id: newId(),
-        role: 'them' as const,
-        text: opener,
-        createdAt: Date.now(),
-      },
-    ]
-  })
-  const [draft, setDraft] = useState('')
-  const [themTyping, setThemTyping] = useState(false)
+  useEffect(() => {
+    if (!profileId || !profile) {
+      setMessages([])
+      setThreadId(null)
+      setRemotePhase('off')
+      return
+    }
+
+    if (!useRemote || !user?.id || !supabase) {
+      setRemotePhase('off')
+      setThreadId(null)
+      const saved = loadThreadMessages(profileId)
+      const opener = `Hey… it’s ${firstName(profile.name)}. I’ve been hoping you’d message. What’s on your mind?`
+      setMessages(
+        saved ?? [
+          {
+            id: newId(),
+            role: 'them' as const,
+            text: opener,
+            createdAt: Date.now(),
+          },
+        ],
+      )
+      return
+    }
+
+    setRemotePhase('loading')
+    const openerEarly = `Hey… it’s ${firstName(profile.name)}. I’ve been hoping you’d message. What’s on your mind?`
+    const savedEarly = loadThreadMessages(profileId)
+    setMessages(
+      savedEarly?.length
+        ? savedEarly
+        : [
+            {
+              id: newId(),
+              role: 'them' as const,
+              text: openerEarly,
+              createdAt: Date.now(),
+            },
+          ],
+    )
+
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const { threadId: tid, messages: remote } = await ensureChatThread(supabase, user.id, profileId)
+        if (cancelled) return
+
+        let next = remote
+        if (!remote.length) {
+          const local = loadThreadMessages(profileId)
+          if (local?.length) {
+            next = local
+            await updateThreadMessages(supabase, tid, next)
+            saveThreadMessages(profileId, [])
+          } else {
+            const opener = `Hey… it’s ${firstName(profile.name)}. I’ve been hoping you’d message. What’s on your mind?`
+            next = [
+              {
+                id: newId(),
+                role: 'them' as const,
+                text: opener,
+                createdAt: Date.now(),
+              },
+            ]
+            await updateThreadMessages(supabase, tid, next)
+          }
+        }
+
+        if (cancelled) return
+        setThreadId(tid)
+        setMessages(next)
+        setRemotePhase('live')
+      } catch {
+        if (cancelled) return
+        setRemotePhase('err')
+        setThreadId(null)
+        const saved = loadThreadMessages(profileId)
+        const opener = `Hey… it’s ${firstName(profile.name)}. I’ve been hoping you’d message. What’s on your mind?`
+        setMessages(
+          saved ?? [
+            {
+              id: newId(),
+              role: 'them' as const,
+              text: opener,
+              createdAt: Date.now(),
+            },
+          ],
+        )
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [profileId, profile, useRemote, user?.id, supabase])
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, themTyping])
 
   useEffect(() => {
-    if (!profileId || !profile) return
+    if (!profileId || !profile || useRemote) return
     saveThreadMessages(profileId, messages)
-  }, [profileId, profile, messages])
+  }, [profileId, profile, messages, useRemote])
 
   useEffect(() => {
-    if (!profileId) return
+    if (!profileId || useRemote) return
     const k = threadStorageKey(profileId)
     const onStorage = (e: StorageEvent) => {
       if (e.key !== k || e.newValue == null) return
-      const next = parseThreadMessagesJson(e.newValue)
-      if (next) setMessages(next)
+      const parsed = parseThreadMessagesJson(e.newValue)
+      if (parsed) setMessages(parsed)
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
-  }, [profileId])
+  }, [profileId, useRemote])
+
+  useEffect(() => {
+    if (!useRemote || !supabase || !threadId || remotePhase !== 'live') return
+    const t = window.setTimeout(() => {
+      void updateThreadMessages(supabase, threadId, messages).catch(() => {})
+    }, 650)
+    return () => window.clearTimeout(t)
+  }, [messages, threadId, useRemote, remotePhase, supabase])
 
   const send = useCallback(() => {
     const text = draft.trim()
@@ -158,12 +262,12 @@ export function ChatPage({ profileId }: ChatPageProps) {
 
   if (!profile) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 text-center text-slate-900">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4 text-center text-stone-900">
         <p className="font-display text-lg font-semibold">This profile isn’t available.</p>
-        <p className="mt-2 text-sm text-slate-600">She may have been updated or removed.</p>
+        <p className="mt-2 text-sm text-stone-600">They may have been updated or removed.</p>
         <Link
           to="/"
-          className="mt-8 rounded-full bg-slate-900 px-6 py-2.5 font-display text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="mt-8 rounded-full bg-stone-900 px-6 py-2.5 font-display text-sm font-semibold text-white transition hover:bg-stone-800"
         >
           Back to browse
         </Link>
@@ -172,14 +276,22 @@ export function ChatPage({ profileId }: ChatPageProps) {
   }
 
   const fn = firstName(profile.name)
+  /** Block send until remote thread is ready; messages stay visible (optimistic opener / cache) while loading. */
+  const remoteInputLocked = useRemote && remotePhase === 'loading'
 
   return (
-    <div className="flex h-[100dvh] min-h-0 flex-col bg-slate-100">
-      <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-3 py-3 sm:px-4">
+    <div className="flex h-[100dvh] min-h-0 flex-col bg-stone-100">
+      {remotePhase === 'err' && useRemote ? (
+        <p className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs text-amber-950">
+          Could not sync this chat with your account. You&apos;re viewing a local copy; try refreshing after checking
+          your connection.
+        </p>
+      ) : null}
+      <header className="flex shrink-0 items-center gap-3 border-b border-stone-200 bg-white px-3 py-3 sm:px-4">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
           aria-label="Back to home"
         >
           <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -189,24 +301,27 @@ export function ChatPage({ profileId }: ChatPageProps) {
         <img
           src={profile.imageUrl}
           alt=""
-          className="size-11 shrink-0 rounded-full object-cover ring-2 ring-slate-200"
+          className="size-11 shrink-0 rounded-full object-cover ring-2 ring-stone-200"
         />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate font-display text-base font-bold text-slate-900">{profile.name}</h1>
-          <p className="truncate text-xs text-slate-600">{profile.moodLabel}</p>
+          <h1 className="truncate font-display text-base font-bold text-stone-900">{profile.name}</h1>
+          <p className="truncate text-xs text-stone-600">{profile.moodLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="tabular-nums text-xs font-medium text-slate-500">{balance} cr</span>
+          <span className="tabular-nums text-xs font-medium text-stone-500">{balance} cr</span>
         </div>
       </header>
 
       <div
         ref={listRef}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain bg-slate-100 px-3 py-4 sm:px-4"
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain bg-stone-100 px-3 py-4 sm:px-4"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
       >
+        {remoteInputLocked ? (
+          <p className="shrink-0 text-center text-xs font-medium text-stone-500">Syncing conversation…</p>
+        ) : null}
         {messages.map((m) => (
           <div
             key={m.id}
@@ -215,12 +330,12 @@ export function ChatPage({ profileId }: ChatPageProps) {
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm sm:max-w-[70%] ${
                 m.role === 'user'
-                  ? 'rounded-br-md bg-slate-900 text-white shadow-slate-900/15'
-                  : 'rounded-bl-md border border-slate-200 bg-white text-slate-900 shadow-slate-900/5'
+                  ? 'rounded-br-md bg-stone-900 text-white shadow-stone-900/15'
+                  : 'rounded-bl-md border border-stone-200 bg-white text-stone-900 shadow-stone-900/5'
               }`}
             >
               {m.role === 'them' && (
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-stone-500">
                   {fn}
                 </p>
               )}
@@ -228,26 +343,26 @@ export function ChatPage({ profileId }: ChatPageProps) {
             </div>
           </div>
         ))}
-        {themTyping && (
+        {!remoteInputLocked && themTyping ? (
           <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-400 shadow-sm">
+            <div className="rounded-2xl rounded-bl-md border border-stone-200 bg-white px-4 py-3 text-sm text-stone-400 shadow-sm">
               <span className="inline-flex gap-1">
-                <span className="size-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.2s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.1s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-slate-400" />
+                <span className="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:-0.2s]" />
+                <span className="size-1.5 animate-bounce rounded-full bg-stone-400 [animation-delay:-0.1s]" />
+                <span className="size-1.5 animate-bounce rounded-full bg-stone-400" />
               </span>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
-      <div className="shrink-0 border-t border-slate-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
+      <div className="shrink-0 border-t border-stone-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
         {balance < CREDITS_PER_MESSAGE && (
           <p className="mx-auto mb-2 max-w-3xl rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-center text-xs font-medium text-amber-950/90 sm:text-sm">
             You’re out of credits.{' '}
             <button
               type="button"
-              className="font-semibold text-slate-900 underline decoration-slate-400 hover:decoration-slate-600"
+              className="font-semibold text-stone-900 underline decoration-stone-400 hover:decoration-stone-600"
               onClick={openBuyCredits}
             >
               Buy credits
@@ -272,12 +387,13 @@ export function ChatPage({ profileId }: ChatPageProps) {
             placeholder={`Message ${fn}…`}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none ring-slate-400/0 transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-4 focus:ring-slate-300/40"
+            disabled={remoteInputLocked}
+            className="min-w-0 flex-1 rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none ring-stone-400/0 transition placeholder:text-stone-400 focus:border-stone-400 focus:ring-4 focus:ring-stone-300/40 disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!draft.trim() || themTyping || balance < CREDITS_PER_MESSAGE}
-            className="shrink-0 rounded-2xl bg-slate-900 px-5 py-3 font-display text-sm font-semibold text-white shadow-sm transition enabled:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={remoteInputLocked || !draft.trim() || themTyping || balance < CREDITS_PER_MESSAGE}
+            className="shrink-0 rounded-2xl bg-stone-900 px-5 py-3 font-display text-sm font-semibold text-white shadow-sm transition enabled:hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send
           </button>

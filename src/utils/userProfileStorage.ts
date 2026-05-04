@@ -7,6 +7,10 @@ export type UserProfileDraft = {
   age: string
   region: string
   interests: string
+  /** Public URL from Supabase Storage when signed in; empty uses placeholder in UI */
+  avatarUrl: string
+  /** Extra photos (public URLs) for the same gallery strip as companion profiles */
+  galleryUrls: string[]
 }
 
 export const EMPTY_USER_PROFILE: UserProfileDraft = {
@@ -16,6 +20,8 @@ export const EMPTY_USER_PROFILE: UserProfileDraft = {
   age: '',
   region: '',
   interests: '',
+  avatarUrl: '',
+  galleryUrls: [],
 }
 
 function parseAge(age: string): number | null {
@@ -36,6 +42,9 @@ export function profileCompletionPercent(p: UserProfileDraft): number {
   if (p.region.trim().length >= 2) n += 13
   if (p.interests.trim().length >= 12) n += 10
   else if (p.interests.trim().length >= 3) n += 5
+  if (p.avatarUrl.trim().length > 8) n += 8
+  if (p.galleryUrls.length >= 2) n += 8
+  else if (p.galleryUrls.length === 1) n += 4
   return Math.min(100, n)
 }
 
@@ -46,7 +55,12 @@ export function readUserProfile(): UserProfileDraft {
     const o = JSON.parse(raw) as unknown
     if (!o || typeof o !== 'object') return { ...EMPTY_USER_PROFILE }
     const x = o as Record<string, unknown>
-    const str = (k: keyof UserProfileDraft) => (typeof x[k] === 'string' ? x[k] : '')
+    const str = (k: keyof UserProfileDraft) => (typeof x[k] === 'string' ? (x[k] as string) : '')
+    const rawGu = x.galleryUrls
+    let galleryUrls: string[] = []
+    if (Array.isArray(rawGu)) {
+      galleryUrls = rawGu.filter((u): u is string => typeof u === 'string' && u.trim().length > 4)
+    }
     return {
       displayName: str('displayName'),
       tagline: str('tagline'),
@@ -54,6 +68,8 @@ export function readUserProfile(): UserProfileDraft {
       age: str('age'),
       region: str('region'),
       interests: str('interests'),
+      avatarUrl: str('avatarUrl'),
+      galleryUrls,
     }
   } catch {
     return { ...EMPTY_USER_PROFILE }

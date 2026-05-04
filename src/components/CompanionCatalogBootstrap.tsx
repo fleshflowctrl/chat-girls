@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { setRuntimeCompanionProfiles } from '../data/mockProfiles'
+import { mergeRemoteCompanionCatalogWithDemoMales, setRuntimeCompanionProfiles } from '../data/mockProfiles'
 import { fetchCompanionProfiles } from '../lib/api/companionProfiles'
 
 /** Loads companion rows from Supabase once; keeps chat deep-links in sync with the grid. */
@@ -8,7 +8,7 @@ export function CompanionCatalogBootstrap() {
     let cancelled = false
     fetchCompanionProfiles().then((rows) => {
       if (cancelled || rows.length === 0) return
-      setRuntimeCompanionProfiles(rows)
+      setRuntimeCompanionProfiles(mergeRemoteCompanionCatalogWithDemoMales(rows))
     })
     return () => {
       cancelled = true

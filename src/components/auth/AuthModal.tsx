@@ -74,7 +74,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   if (!open) return null
 
   const inputClass =
-    'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25'
+    'mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3 py-3 text-base text-stone-900 shadow-sm outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/30'
 
   return (
     <div
@@ -85,26 +85,26 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     >
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-stone-900/75 backdrop-blur-sm"
         aria-label="Close"
         onClick={onClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-stone-200 bg-white p-5 shadow-2xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-sky-700/90">Account</p>
-            <h2 id={titleId} className="mt-1 font-display text-xl font-bold text-slate-900 sm:text-2xl">
-              Sign in to chat
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-800/90">Account</p>
+            <h2 id={titleId} className="mt-1 font-[family-name:var(--font-brand-serif)] text-xl font-semibold text-stone-900 sm:text-2xl">
+              Sign in to continue
             </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Create a free account or sign in to message profiles. Your account is stored in Supabase
-              (same secure database as your profile when you use the Profile tab).
+            <p className="mt-2 text-base leading-relaxed text-stone-700">
+              Create a free account or sign in to send messages. Your details are stored securely with your
+              profile.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+            className="rounded-full p-3 text-stone-500 transition hover:bg-stone-100 hover:text-stone-800"
             aria-label="Close"
           >
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -113,12 +113,12 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           </button>
         </div>
 
-        <div className="mt-5 flex rounded-xl bg-slate-100 p-1">
+        <div className="mt-5 flex rounded-xl bg-stone-100 p-1">
           <button
             type="button"
             onClick={() => setTab('signin')}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition ${
-              tab === 'signin' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`min-h-[2.75rem] flex-1 rounded-lg py-2.5 text-base font-semibold transition ${
+              tab === 'signin' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'
             }`}
           >
             Sign in
@@ -126,8 +126,8 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           <button
             type="button"
             onClick={() => setTab('signup')}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition ${
-              tab === 'signup' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`min-h-[2.75rem] flex-1 rounded-lg py-2.5 text-base font-semibold transition ${
+              tab === 'signup' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'
             }`}
           >
             Sign up
@@ -142,7 +142,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           }}
         >
           <div>
-            <label htmlFor="auth-email" className="text-sm font-medium text-slate-800">
+            <label htmlFor="auth-email" className="text-base font-medium text-stone-800">
               Email
             </label>
             <input
@@ -155,7 +155,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             />
           </div>
           <div>
-            <label htmlFor="auth-password" className="text-sm font-medium text-slate-800">
+            <label htmlFor="auth-password" className="text-base font-medium text-stone-800">
               Password
             </label>
             <input
@@ -169,16 +169,16 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           </div>
 
           {error ? (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p>
+            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-base text-red-900">{error}</p>
           ) : null}
           {info ? (
-            <p className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-950">{info}</p>
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-base text-amber-950">{info}</p>
           ) : null}
 
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-xl bg-slate-900 py-3 font-display text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-[3rem] w-full rounded-xl bg-stone-900 py-3.5 font-display text-base font-semibold text-white shadow-md transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {busy ? 'Please wait…' : tab === 'signup' ? 'Create account' : 'Sign in'}
           </button>

@@ -1,10 +1,14 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-display: 'Outfit', system-ui, sans-serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
-  --color-brand-accent: #0c4a6e;
-  --color-brand-dark: #0f172a;
+  --font-display: 'Source Sans 3', system-ui, sans-serif;
+  --font-body: 'Source Sans 3', system-ui, sans-serif;
+  --font-brand-serif: 'Merriweather', Georgia, 'Times New Roman', serif;
+  /* Warm, high-contrast accents for readability (65+ friendly) */
+  --color-brand-accent: #1e3a5f;
+  --color-brand-dark: #1c1917;
+  --color-warm-canvas: #faf8f5;
+  --color-warm-paper: #f5f0e8;
 }
 
 html {
@@ -14,6 +18,8 @@ html {
 body {
   margin: 0;
   font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -23,12 +29,12 @@ body {
   100% {
     transform: scale(1);
     opacity: 1;
-    box-shadow: 0 0 0 0 rgb(14 165 233 / 0.28);
+    box-shadow: 0 0 0 0 rgb(217 119 6 / 0.28);
   }
   50% {
     transform: scale(1.04);
     opacity: 0.92;
-    box-shadow: 0 0 0 6px rgb(14 165 233 / 0);
+    box-shadow: 0 0 0 6px rgb(217 119 6 / 0);
   }
 }
 
